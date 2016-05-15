@@ -228,6 +228,45 @@ func FromCSV(filename string) *Mat {
 	return m
 }
 
+func Rand(r, c int, args ...float64) *Mat {
+	m := New(r, c)
+	switch len(args) {
+	case 0:
+		for i := 0; i < m.r*m.c; i++ {
+			m.vals[i] = rand.Float64()
+		}
+	case 1:
+		to := args[0]
+		for i := 0; i < m.r*m.c; i++ {
+			m.vals[i] = rand.Float64() * to
+		}
+	case 2:
+		from := args[0]
+		to := args[1]
+		if !(from < to) {
+			s := "In mat.%s the first argument, %f, is not less than the\n"
+			s += "second argument, %f. The first argument must be strictly\n"
+			s += "less than the second.\n"
+			s = fmt.Sprintf(s, "Rand", from, to)
+			fmt.Println(s)
+			fmt.Println("Stack trace for this error:")
+			debug.PrintStack()
+			os.Exit(1)
+		}
+		for i := 0; i < m.r*m.c; i++ {
+			m.vals[i] = rand.Float64()*(to-from) + from
+		}
+	default:
+		s := "In mat.%s expected 0 to 2 arguments, but recieved %d."
+		s = fmt.Sprintf(s, "Rand", len(args))
+		fmt.Println(s)
+		fmt.Println("Stack trace for this error:")
+		debug.PrintStack()
+		os.Exit(1)
+	}
+	return m
+}
+
 /*
 Reshape changes the row and the columns of the mat object as long as the total
 number of values contained in the mat object remains constant. The order and
@@ -356,60 +395,6 @@ value.
 */
 func (m *Mat) Set(r, c int, val float64) *Mat {
 	m.vals[r*m.r+c] = val
-	return m
-}
-
-/*
-Rand sets the values of a mat to random numbers. The range from which the random
-numbers are selected is determined based on the arguments passed.
-
-For no arguments, such as
-	m.Rand()
-the range is [0, 1)
-
-For 1 argument, such as
-	m.Rand(arg)
-the range is [0, arg) for arg > 0, or (arg, 0] is arg < 0.
-
-For 2 arguments, such as
-	m.Rand(arg1, arg2)
-the range is [arg1, arg2).
-*/
-func (m *Mat) Rand(args ...float64) *Mat {
-	switch len(args) {
-	case 0:
-		for i := 0; i < m.r*m.c; i++ {
-			m.vals[i] = rand.Float64()
-		}
-	case 1:
-		to := args[0]
-		for i := 0; i < m.r*m.c; i++ {
-			m.vals[i] = rand.Float64() * to
-		}
-	case 2:
-		from := args[0]
-		to := args[1]
-		if !(from < to) {
-			s := "In mat.%s the first argument, %f, is not less than the\n"
-			s += "second argument, %f. The first argument must be strictly\n"
-			s += "less than the second.\n"
-			s = fmt.Sprintf(s, "Rand", from, to)
-			fmt.Println(s)
-			fmt.Println("Stack trace for this error:")
-			debug.PrintStack()
-			os.Exit(1)
-		}
-		for i := 0; i < m.r*m.c; i++ {
-			m.vals[i] = rand.Float64()*(to-from) + from
-		}
-	default:
-		s := "In mat.%s expected 0 to 2 arguments, but recieved %d."
-		s = fmt.Sprintf(s, "Rand", len(args))
-		fmt.Println(s)
-		fmt.Println("Stack trace for this error:")
-		debug.PrintStack()
-		os.Exit(1)
-	}
 	return m
 }
 
