@@ -1083,3 +1083,10 @@ func (m *Mat) Concat(n *Mat) *Mat {
 	}
 	return m
 }
+
+func (m *Mat) Tanh() *Mat {
+	for i := range m.vals {
+		m.vals[i] = math.Tanh(m.vals[i])
+	}
+	return m
+}
