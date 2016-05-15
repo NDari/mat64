@@ -122,12 +122,19 @@ func From2DSlice(s [][]float64) *Mat {
 }
 
 /*
-From1DSlice creates a mat object from a []float64 slice. The created mat
-object has one row, and the number of columns equal to the length of the
-1D slice from which it was created.
+FromData creates a mat object from a []float64 slice.
 */
-func From1DSlice(s []float64) *Mat {
-	m := New(1, len(s))
+func FromData(r, c int, s []float64) *Mat {
+	if r*c != len(s) {
+		s := "In mat.%s, the number of elements in the request mat is not equal to\n"
+		s += "the number of passed element: %d, vs %d."
+		s = fmt.Sprintf(s, "FromData()", r*c, len(s))
+		fmt.Println(s)
+		fmt.Println("Stack trace for this error:")
+		debug.PrintStack()
+		os.Exit(1)
+	}
+	m := New(r, c)
 	copy(m.vals, s)
 	return m
 }

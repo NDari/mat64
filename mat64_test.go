@@ -115,7 +115,7 @@ func TestFrom1DSlice(t *testing.T) {
 	for i := 0; i < len(s); i++ {
 		s[i] = float64(i * i)
 	}
-	m := From1DSlice(s)
+	m := FromData(rows, cols, s)
 	if len(m.vals) != rows*cols {
 		t.Errorf("expected length of mat to be %d, but got %d", rows*cols, len(m.vals))
 	}
@@ -179,7 +179,7 @@ func TestReshape(t *testing.T) {
 	for i := 0; i < len(s); i++ {
 		s[i] = float64(i * 3)
 	}
-	m := From1DSlice(s).Reshape(10, 12)
+	m := FromData(1, 120, s).Reshape(10, 12)
 	if m.r != 10 {
 		t.Errorf("expected rows = 10, got %d", m.r)
 	}
