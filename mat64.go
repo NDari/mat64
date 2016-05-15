@@ -41,7 +41,7 @@ type Mat struct {
 
 /*
 New is the primary constructor for the "Mat" object. New is a variadic function,
-expecting 0 to 3 ints, with differing behavior as follows:
+expecting 0 to 3 integers, with differing behavior as follows:
 
 	m := New()
 
@@ -57,8 +57,8 @@ slice of length x, and capacity 2x.
 	m := New(x, y)
 
 m is an x by y matrix, with the underlying slice of
-length rc, and capacity of 2rc. This is a good case
-for when your matrix is going to expand in th
+length xy, and capacity of 2xy. This is a good case
+for when your matrix is going to expand in the
 future. There is a negligible hit to performance
 and a larger memory usage of your code. But in case
 expanding matrices, many reallocations are avoided.
@@ -66,7 +66,7 @@ expanding matrices, many reallocations are avoided.
 	m := New(x, y, z)
 
 m is a x by u matrix, with the underlying slice of
-length rc, and capacity z. This is a good choice for
+length xy, and capacity z. This is a good choice for
 when the size of the matrix is static, or when the
 application is memory constrained.
 
@@ -122,7 +122,7 @@ func From2DSlice(s [][]float64) *Mat {
 }
 
 /*
-From1DSlice creates a mat object from a slice of float64s. The created mat
+From1DSlice creates a mat object from a []float64 slice. The created mat
 object has one row, and the number of columns equal to the length of the
 1D slice from which it was created.
 */
@@ -330,10 +330,10 @@ func (m *Mat) At(r, c int) float64 {
 }
 
 /*
-Map applies a given function to each element of a mat object. The given
+Foreach applies a given function to each element of a mat object. The given
 function must take a pointer to a float64, and return nothing.
 */
-func (m *Mat) Map(f func(*float64)) *Mat {
+func (m *Mat) Foreach(f func(*float64)) *Mat {
 	for i := 0; i < m.r*m.c; i++ {
 		f(&m.vals[i])
 	}
@@ -341,12 +341,21 @@ func (m *Mat) Map(f func(*float64)) *Mat {
 }
 
 /*
-Set sets all values of a mat to the passed float64 value.
+SetAll sets all values of a mat to the passed float64 value.
 */
-func (m *Mat) Set(val float64) *Mat {
+func (m *Mat) SetAll(val float64) *Mat {
 	for i := range m.vals {
 		m.vals[i] = val
 	}
+	return m
+}
+
+/*
+Set sets the value of a mat at a given row and column to a given
+value.
+*/
+func (m *Mat) Set(r, c int, val float64) *Mat {
+	m.vals[r*m.r+c] = val
 	return m
 }
 
@@ -432,7 +441,6 @@ func (m *Mat) Col(x int) *Mat {
 	return v
 }
 
-//=============================================================
 /*
 Row returns a new mat object whose values are equal to a row of the original
 mat object. The number of Rows of the returned mat object is equal to 1, and
@@ -562,417 +570,400 @@ func (m *Mat) Any(f func(*float64) bool) bool {
 	return false
 }
 
-/*
-Mul is the element-wise multiplication of a mat object by another which is
-passed to this method.
-
-The shape of the mat objects must be the same (same number or rows and columns)
-and the results of the element-wise multiplication is stored in the original
-mat on which the method was invoked.
-*/
-func (m *Mat) Mul(n *Mat) *Mat {
-	if m.r != n.r {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, the number of the rows of the first mat is %d\n"
-		s += "but the number of rows of the second mat is %d. They must\n"
-		s += "match.\n"
-		s = fmt.Sprintf(s, "Mul", m.r, n.r)
-		fmt.Println(s)
-		fmt.Println("Stack trace for this error:")
-		debug.PrintStack()
-		os.Exit(1)
-	}
-	if m.c != n.c {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, the number of the columns of the first mat is %d\n"
-		s += "but the number of columns of the second mat is %d. They must\n"
-		s += "match.\n"
-		s = fmt.Sprintf(s, "Mul", m.c, n.c)
-		fmt.Println(s)
-		fmt.Println("Stack trace for this error:")
-		debug.PrintStack()
-		os.Exit(1)
-	}
-	for i := 0; i < m.r*m.c; i++ {
-		m.vals[i] *= n.vals[i]
-	}
-	return m
-}
-
-/*
-Add is the element-wise addition of a mat object with another which is passed
-to this method.
-
-The shape of the mat objects must be the same (same number or rows and columns)
-and the results of the element-wise addition is stored in the original
-mat on which the method was invoked.
-*/
-func (m *Mat) Add(n *Mat) *Mat {
-	if m.r != n.r {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, the number of the rows of the first mat is %d\n"
-		s += "but the number of rows of the second mat is %d. They must\n"
-		s += "match.\n"
-		s = fmt.Sprintf(s, "Add", m.r, n.r)
-		fmt.Println(s)
-		fmt.Println("Stack trace for this error:")
-		debug.PrintStack()
-		os.Exit(1)
-	}
-	if m.c != n.c {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, the number of the columns of the first mat is %d\n"
-		s += "but the number of columns of the second mat is %d. They must\n"
-		s += "match.\n"
-		s = fmt.Sprintf(s, "Add", m.c, n.c)
-		fmt.Println(s)
-		fmt.Println("Stack trace for this error:")
-		debug.PrintStack()
-		os.Exit(1)
-	}
-	for i := 0; i < m.r*m.c; i++ {
-		m.vals[i] += n.vals[i]
-	}
-	return m
-}
-
-/*
-Sub is the element-wise subtraction of a mat object which is passed
-to this method from the original mat which called the method.
-
-The shape of the mat objects must be the same (same number or rows and columns)
-and the results of the element-wise subtraction is stored in the original
-mat on which the method was invoked.
-*/
-func (m *Mat) Sub(n *Mat) *Mat {
-	if m.r != n.r {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, the number of the rows of the first mat is %d\n"
-		s += "but the number of rows of the second mat is %d. They must\n"
-		s += "match.\n"
-		s = fmt.Sprintf(s, "Sub", m.r, n.r)
-		fmt.Println(s)
-		fmt.Println("Stack trace for this error:")
-		debug.PrintStack()
-		os.Exit(1)
-	}
-	if m.c != n.c {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, the number of the columns of the first mat is %d\n"
-		s += "but the number of columns of the second mat is %d. They must\n"
-		s += "match.\n"
-		s = fmt.Sprintf(s, "Sub", m.c, n.c)
-		fmt.Println(s)
-		fmt.Println("Stack trace for this error:")
-		debug.PrintStack()
-		os.Exit(1)
-	}
-	for i := 0; i < m.r*m.c; i++ {
-		m.vals[i] -= n.vals[i]
-	}
-	return m
-}
-
-/*
-Div is the element-wise dicition of a mat object by another which is passed
-to this method.
-
-The shape of the mat objects must be the same (same number or rows and columns)
-and the results of the element-wise division is stored in the original
-mat on which the method was invoked. The dividing mat object (passed to this
-method) must not contain any elements which are equal to 0.0.
-*/
-func (m *Mat) Div(n *Mat) *Mat {
-	if m.r != n.r {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, the number of the rows of the first mat is %d\n"
-		s += "but the number of rows of the second mat is %d. They must\n"
-		s += "match.\n"
-		s = fmt.Sprintf(s, "Div", m.r, n.r)
-		fmt.Println(s)
-		fmt.Println("Stack trace for this error:")
-		debug.PrintStack()
-		os.Exit(1)
-	}
-	if m.c != n.c {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, the number of the columns of the first mat is %d\n"
-		s += "but the number of columns of the second mat is %d. They must\n"
-		s += "match.\n"
-		s = fmt.Sprintf(s, "Div", m.c, n.c)
-		fmt.Println(s)
-		fmt.Println("Stack trace for this error:")
-		debug.PrintStack()
-		os.Exit(1)
-	}
-	zero := func(i *float64) bool {
-		if *i == 0.0 {
-			return true
+func (m *Mat) Mul(val interface{}) *Mat {
+	n := m.Copy()
+	switch v := val.(type) {
+	case float64:
+		for i := range n.vals {
+			n.vals[i] *= v
 		}
-		return false
-	}
-	if n.Any(zero) {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, one or more elements of the second matrix are 0.0\n"
-		s += "Division by zero is not allowed.\n"
-		s = fmt.Sprintf(s, "Div", m.c, n.c)
-		fmt.Println(s)
-		fmt.Println("Stack trace for this error:")
-		debug.PrintStack()
-		os.Exit(1)
-	}
-	for i := 0; i < m.r*m.c; i++ {
-		m.vals[i] /= n.vals[i]
-	}
-	return m
-}
-
-/*
-Scale is the element-wise multiplication of a mat object by a scalar.
-
-The results of the element-wise multiplication is stored in the original
-mat on which the method was invoked.
-*/
-func (m *Mat) Scale(f float64) *Mat {
-	for i := 0; i < m.r*m.c; i++ {
-		m.vals[i] *= f
-	}
-	return m
-}
-
-/*
-Sum returns the sum of the elements along a specific row or specific column.
-The first argument selects the row or column (0 or 1), and the second argument
-selects which row or column for which we want to calculate the sum. For
-example:
-
-	m.Sum(0, 2)
-
-will return the sum of the 3rd row of mat m.
-*/
-func (m *Mat) Sum(axis, slice int) float64 {
-	if axis != 0 && axis != 1 {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, the first argument must be 0 or 1, however %d "
-		s += "was recieved.\n"
-		s = fmt.Sprintf(s, "Sum", axis)
-		fmt.Println(s)
-		fmt.Println("Stack trace for this error:")
-		debug.PrintStack()
-		os.Exit(1)
-	}
-	if axis == 0 {
-		if (slice >= m.r) || (slice < 0) {
-			fmt.Println("\nNumgo/mat error.")
-			s := "In mat.%s the row %d is outside of bounds [0, %d)\n"
-			s = fmt.Sprintf(s, "Sum", slice, m.r)
+	case *Mat:
+		if v.r != n.r {
+			s := "In mat.%v, the number of the rows of the receiver is %d\n"
+			s += "but the number of rows of the passed mat is %d. They must\n"
+			s += "match.\n"
+			s = fmt.Sprintf(s, "Mul", n.r, v.r)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-	} else if axis == 1 {
-		if (slice >= m.c) || (slice < 0) {
-			fmt.Println("\nNumgo/mat error.")
-			s := "In mat.%s the column %d is outside of bounds [0, %d)\n"
-			s = fmt.Sprintf(s, "Sum", slice, m.c)
+		if v.c != n.c {
+			s := "In mat.%v, the number of the columns of the receiver is %d\n"
+			s += "but the number of columns of the passed mat is %d. They must\n"
+			s += "match.\n"
+			s = fmt.Sprintf(s, "Mul", n.c, v.c)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-	}
-	return m.precheckedSum(axis, slice)
-}
-
-func (m *Mat) precheckedSum(axis, slice int) float64 {
-	x := 0.0
-	if axis == 0 {
-		for i := 0; i < m.c; i++ {
-			x += m.vals[slice*m.c+i]
+		for i := range n.vals {
+			n.vals[i] *= v.vals[i]
 		}
-	} else if axis == 1 {
-		for i := 0; i < m.r; i++ {
-			x += m.vals[i*m.c+slice]
-		}
-	}
-	return x
-}
-
-/*
-Average returns the average of the elements along a specific row or specific
-column.
-The first argument selects the row or column (0 or 1), and the second argument
-selects which row or column for which we want to calculate the average. For
-example:
-
-	m.Average(0, 2)
-
-will return the average of the 3rd row of mat m.
-*/
-func (m *Mat) Average(axis, slice int) float64 {
-	if axis != 0 && axis != 1 {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, the first argument must be 0 or 1, however %d "
-		s += "was recieved.\n"
-		s = fmt.Sprintf(s, "Average", axis)
+	default:
+		s := "In mat.%v, the passed value must be a float64 or *Mat, however, %v\n"
+		s += "was received.\n"
+		s = fmt.Sprintf(s, "Mul()", v)
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
 		debug.PrintStack()
 		os.Exit(1)
 	}
-	if axis == 0 {
-		if (slice >= m.r) || (slice < 0) {
-			fmt.Println("\nNumgo/mat error.")
-			s := "In mat.%s the row %d is outside of bounds [0, %d)\n"
-			s = fmt.Sprintf(s, "Average", slice, m.r)
+	return n
+}
+
+func (m *Mat) Add(val interface{}) *Mat {
+	n := m.Copy()
+	switch v := val.(type) {
+	case float64:
+		for i := range n.vals {
+			n.vals[i] += v
+		}
+	case *Mat:
+		if v.r != n.r {
+			s := "In mat.%v, the number of the rows of the receiver is %d\n"
+			s += "but the number of rows of the passed mat is %d. They must\n"
+			s += "match.\n"
+			s = fmt.Sprintf(s, "Add()", n.r, v.r)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-	} else if axis == 1 {
-		if (slice >= m.c) || (slice < 0) {
-			fmt.Println("\nNumgo/mat error.")
-			s := "In mat.%s the column %d is outside of bounds [0, %d)\n"
-			s = fmt.Sprintf(s, "Average", slice, m.c)
+		if v.c != n.c {
+			s := "In mat.%s, the number of the columns of the receiver is %d\n"
+			s += "but the number of columns of the passed mat is %d. They must\n"
+			s += "match.\n"
+			s = fmt.Sprintf(s, "Add()", n.c, v.c)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-	}
-	return m.precheckedAverage(axis, slice)
-}
-
-func (m *Mat) precheckedAverage(axis, slice int) float64 {
-	sum := m.precheckedSum(axis, slice)
-	if axis == 0 {
-		return sum / float64(m.c)
-	}
-	return sum / float64(m.r)
-}
-
-/*
-Prod returns the product of the elements along a specific row or specific
-column.
-The first argument selects the row or column (0 or 1), and the second argument
-selects which row or column for which we want to calculate the product. For
-example:
-
-	m.Prod(1, 2)
-
-will return the product of the 3rd column of mat m.
-*/
-func (m *Mat) Prod(axis, slice int) float64 {
-	if axis != 0 && axis != 1 {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, the first argument must be 0 or 1, however %d "
-		s += "was recieved.\n"
-		s = fmt.Sprintf(s, "Prod", axis)
+		for i := range n.vals {
+			n.vals[i] += v.vals[i]
+		}
+	default:
+		s := "In mat.%s, the passed value must be a float64 or *Mat, however, %v\n"
+		s += "was received.\n"
+		s = fmt.Sprintf(s, "Add()", v)
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
 		debug.PrintStack()
 		os.Exit(1)
 	}
-	if axis == 0 {
-		if (slice >= m.r) || (slice < 0) {
-			fmt.Println("\nNumgo/mat error.")
-			s := "In mat.%s the requested row %d is outside of bounds [0, %d)\n"
-			s = fmt.Sprintf(s, "Prod", slice, m.r)
-			fmt.Println(s)
-			fmt.Println("Stack trace for this error:")
-			debug.PrintStack()
-			os.Exit(1)
-		}
-	} else if axis == 1 {
-		if (slice >= m.c) || (slice < 0) {
-			fmt.Println("\nNumgo/mat error.")
-			s := "In mat.%s the column %d is outside of bounds [0, %d)\n"
-			s = fmt.Sprintf(s, "Prod", slice, m.c)
-			fmt.Println(s)
-			fmt.Println("Stack trace for this error:")
-			debug.PrintStack()
-			os.Exit(1)
-		}
-	}
-	x := 1.0
-	if axis == 0 {
-		for i := 0; i < m.c; i++ {
-			x *= m.vals[slice*m.c+i]
-		}
-	} else if axis == 1 {
-		for i := 0; i < m.r; i++ {
-			x *= m.vals[i*m.c+slice]
-		}
-	}
-	return x
+	return n
 }
 
-/*
-Std returns the standard deviation of the elements along a specific row
-or specific column. The standard deviation is defined as the square root of
-the mean distance of each element from the mean. Look at:
-http://mathworld.wolfram.com/StandardDeviation.html
-
-For example:
-
-	m.Std(1, 0)
-
-will return the standard deviation of the first column of mat m.
-*/
-func (m *Mat) Std(axis, slice int) float64 {
-	if axis != 0 && axis != 1 {
-		fmt.Println("\nNumgo/mat error.")
-		s := "In mat.%v, the first argument must be 0 or 1, however %d "
-		s += "was recieved.\n"
-		s = fmt.Sprintf(s, "Std", axis)
+func (m *Mat) Sub(val interface{}) *Mat {
+	n := m.Copy()
+	switch v := val.(type) {
+	case float64:
+		for i := range n.vals {
+			n.vals[i] -= v
+		}
+	case *Mat:
+		if v.r != n.r {
+			s := "In mat.%v, the number of the rows of the receiver is %d\n"
+			s += "but the number of rows of the passed mat is %d. They must\n"
+			s += "match.\n"
+			s = fmt.Sprintf(s, "Sub()", n.r, v.r)
+			fmt.Println(s)
+			fmt.Println("Stack trace for this error:")
+			debug.PrintStack()
+			os.Exit(1)
+		}
+		if v.c != n.c {
+			s := "In mat.%v, the number of the columns of the receiver is %d\n"
+			s += "but the number of columns of the passed mat is %d. They must\n"
+			s += "match.\n"
+			s = fmt.Sprintf(s, "Sub()", n.c, v.c)
+			fmt.Println(s)
+			fmt.Println("Stack trace for this error:")
+			debug.PrintStack()
+			os.Exit(1)
+		}
+		for i := range n.vals {
+			n.vals[i] -= v.vals[i]
+		}
+	default:
+		s := "In mat.%v, the passed value must be a float64 or *Mat, however, %v\n"
+		s += "was received.\n"
+		s = fmt.Sprintf(s, "Sub()", v)
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
 		debug.PrintStack()
 		os.Exit(1)
 	}
-	if axis == 0 {
-		if (slice >= m.r) || (slice < 0) {
-			fmt.Println("\nNumgo/mat error.")
-			s := "In mat.%s the row %d is outside of bounds [0, %d)\n"
-			s = fmt.Sprintf(s, "Std", slice, m.r)
+	return n
+}
+
+func (m *Mat) Div(val interface{}) *Mat {
+	n := m.Copy()
+	switch v := val.(type) {
+	case float64:
+		for i := range n.vals {
+			n.vals[i] /= v
+		}
+	case *Mat:
+		if v.r != n.r {
+			s := "In mat.%v, the number of the rows of the receiver is %d\n"
+			s += "but the number of rows of the passed mat is %d. They must\n"
+			s += "match.\n"
+			s = fmt.Sprintf(s, "Div()", n.r, v.r)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-	} else if axis == 1 {
-		if (slice >= m.c) || (slice < 0) {
-			fmt.Println("\nNumgo/mat error.")
-			s := "In mat.%s the column %d is outside of bounds [0, %d)\n"
-			s = fmt.Sprintf(s, "Std", slice, m.c)
+		if v.c != n.c {
+			s := "In mat.%v, the number of the columns of the receiver is %d\n"
+			s += "but the number of columns of the passed mat is %d. They must\n"
+			s += "match.\n"
+			s = fmt.Sprintf(s, "Div()", n.c, v.c)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-	}
-	avg := m.precheckedAverage(axis, slice)
-	var s []float64
-	if axis == 0 {
-		s = make([]float64, m.c)
-		for i := 0; i < m.c; i++ {
-			s[i] = avg - m.vals[slice*m.c+i]
-			s[i] *= s[i]
+		for i := range n.vals {
+			n.vals[i] /= v.vals[i]
 		}
-	} else {
-		s = make([]float64, m.r)
-		for i := 0; i < m.r; i++ {
-			s[i] = avg - m.vals[i*m.c+slice]
-			s[i] *= s[i]
-		}
+	default:
+		s := "In mat.%v, the passed value must be a float64 or *Mat, however, %v\n"
+		s += "was received.\n"
+		s = fmt.Sprintf(s, "Div()", v)
+		fmt.Println(s)
+		fmt.Println("Stack trace for this error:")
+		debug.PrintStack()
+		os.Exit(1)
 	}
+	return n
+}
+
+func (m *Mat) Sum(args ...int) float64 {
 	sum := 0.0
-	for i := range s {
-		sum += s[i]
+	switch len(args) {
+	case 0:
+		for i := range m.vals {
+			sum += m.vals[i]
+		}
+	case 2:
+		axis, slice := args[0], args[1]
+		if axis == 0 {
+			if (slice >= m.r) || (slice < 0) {
+				s := "In mat.%s the row %d is outside of bounds [0, %d)\n"
+				s = fmt.Sprintf(s, "Sum()", slice, m.r)
+				fmt.Println(s)
+				fmt.Println("Stack trace for this error:")
+				debug.PrintStack()
+				os.Exit(1)
+			}
+			for i := 0; i < m.c; i++ {
+				sum += m.vals[slice*m.c+i]
+			}
+		} else if axis == 1 {
+			if (slice >= m.c) || (slice < 0) {
+				s := "In mat.%s the column %d is outside of bounds [0, %d)\n"
+				s = fmt.Sprintf(s, "Sum()", slice, m.c)
+				fmt.Println(s)
+				fmt.Println("Stack trace for this error:")
+				debug.PrintStack()
+				os.Exit(1)
+			}
+			for i := 0; i < m.r; i++ {
+				sum += m.vals[i*m.c+slice]
+			}
+		} else {
+			s := "In mat.%v, the first argument must be 0 or 1, however %d "
+			s += "was received.\n"
+			s = fmt.Sprintf(s, "Sum()", axis)
+			fmt.Println(s)
+			fmt.Println("Stack trace for this error:")
+			debug.PrintStack()
+			os.Exit(1)
+		}
+	default:
+		s := "In mat.%s, 0 or 2 arguments must be passed, but %d was received.\n"
+		s = fmt.Sprintf(s, "Sum()", len(args))
+		fmt.Println(s)
+		fmt.Println("Stack trace for this error:")
+		debug.PrintStack()
+		os.Exit(1)
 	}
-	return math.Sqrt(sum / float64(len(s)))
+	return sum
+}
+
+func (m *Mat) Avg(args ...int) float64 {
+	sum := 0.0
+	switch len(args) {
+	case 0:
+		for i := range m.vals {
+			sum += m.vals[i]
+		}
+		sum /= float64(len(m.vals))
+	case 2:
+		axis, slice := args[0], args[1]
+		if axis == 0 {
+			if (slice >= m.r) || (slice < 0) {
+				s := "In mat.%s the row %d is outside of bounds [0, %d)\n"
+				s = fmt.Sprintf(s, "Avg()", slice, m.r)
+				fmt.Println(s)
+				fmt.Println("Stack trace for this error:")
+				debug.PrintStack()
+				os.Exit(1)
+			}
+			for i := 0; i < m.c; i++ {
+				sum += m.vals[slice*m.c+i]
+			}
+			sum /= float64(m.c)
+		} else if axis == 1 {
+			if (slice >= m.c) || (slice < 0) {
+				s := "In mat.%s the column %d is outside of bounds [0, %d)\n"
+				s = fmt.Sprintf(s, "Avg()", slice, m.c)
+				fmt.Println(s)
+				fmt.Println("Stack trace for this error:")
+				debug.PrintStack()
+				os.Exit(1)
+			}
+			for i := 0; i < m.r; i++ {
+				sum += m.vals[i*m.c+slice]
+			}
+			sum /= float64(m.r)
+		} else {
+			s := "In mat.%v, the first argument must be 0 or 1, however %d "
+			s += "was received.\n"
+			s = fmt.Sprintf(s, "Avg()", axis)
+			fmt.Println(s)
+			fmt.Println("Stack trace for this error:")
+			debug.PrintStack()
+			os.Exit(1)
+		}
+	default:
+		s := "In mat.%s, 0 or 2 arguments must be passed, but %d was received.\n"
+		s = fmt.Sprintf(s, "Avg()", len(args))
+		fmt.Println(s)
+		fmt.Println("Stack trace for this error:")
+		debug.PrintStack()
+		os.Exit(1)
+	}
+	return sum
+}
+
+func (m *Mat) Prd(args ...int) float64 {
+	prd := 1.0
+	switch len(args) {
+	case 0:
+		for i := range m.vals {
+			prd *= m.vals[i]
+		}
+	case 2:
+		axis, slice := args[0], args[1]
+		if axis == 0 {
+			if (slice >= m.r) || (slice < 0) {
+				s := "In mat.%s the row %d is outside of bounds [0, %d)\n"
+				s = fmt.Sprintf(s, "Prd()", slice, m.r)
+				fmt.Println(s)
+				fmt.Println("Stack trace for this error:")
+				debug.PrintStack()
+				os.Exit(1)
+			}
+			for i := 0; i < m.c; i++ {
+				prd *= m.vals[slice*m.c+i]
+			}
+		} else if axis == 1 {
+			if (slice >= m.c) || (slice < 0) {
+				s := "In mat.%s the column %d is outside of bounds [0, %d)\n"
+				s = fmt.Sprintf(s, "Prd()", slice, m.c)
+				fmt.Println(s)
+				fmt.Println("Stack trace for this error:")
+				debug.PrintStack()
+				os.Exit(1)
+			}
+			for i := 0; i < m.r; i++ {
+				prd *= m.vals[i*m.c+slice]
+			}
+		} else {
+			s := "In mat.%v, the first argument must be 0 or 1, however %d "
+			s += "was received.\n"
+			s = fmt.Sprintf(s, "Prd()", axis)
+			fmt.Println(s)
+			fmt.Println("Stack trace for this error:")
+			debug.PrintStack()
+			os.Exit(1)
+		}
+	default:
+		s := "In mat.%s, 0 or 2 arguments must be passed, but %d was received.\n"
+		s = fmt.Sprintf(s, "Prd()", len(args))
+		fmt.Println(s)
+		fmt.Println("Stack trace for this error:")
+		debug.PrintStack()
+		os.Exit(1)
+	}
+	return prd
+}
+
+func (m *Mat) Std(args ...int) float64 {
+	std := 0.0
+	switch len(args) {
+	case 0:
+		avg := m.Avg()
+		sum := 0.0
+		for i := range m.vals {
+			sum += ((avg - m.vals[i]) * (avg - m.vals[i]))
+		}
+		std = math.Sqrt(sum / float64(len(m.vals)))
+	case 2:
+		axis, slice := args[0], args[1]
+		if axis == 0 {
+			if (slice >= m.r) || (slice < 0) {
+				s := "In mat.%s the row %d is outside of bounds [0, %d)\n"
+				s = fmt.Sprintf(s, "Std()", slice, m.r)
+				fmt.Println(s)
+				fmt.Println("Stack trace for this error:")
+				debug.PrintStack()
+				os.Exit(1)
+			}
+			avg := m.Avg(axis, slice)
+			sum := 0.0
+			for i := 0; i < m.c; i++ {
+				sum += ((avg - m.vals[slice*m.c+i]) * (avg - m.vals[slice*m.c+i]))
+			}
+			std = math.Sqrt(sum / float64(len(m.vals)))
+		} else if axis == 1 {
+			if (slice >= m.c) || (slice < 0) {
+				s := "In mat.%s the column %d is outside of bounds [0, %d)\n"
+				s = fmt.Sprintf(s, "Std()", slice, m.c)
+				fmt.Println(s)
+				fmt.Println("Stack trace for this error:")
+				debug.PrintStack()
+				os.Exit(1)
+			}
+			avg := m.Avg(axis, slice)
+			sum := 0.0
+			for i := 0; i < m.r; i++ {
+				sum += ((avg - m.vals[i*m.c+slice]) * (avg - m.vals[i*m.c+slice]))
+			}
+			std = math.Sqrt(sum / float64(len(m.vals)))
+		} else {
+			s := "In mat.%v, the first argument must be 0 or 1, however %d "
+			s += "was received.\n"
+			s = fmt.Sprintf(s, "Std()", axis)
+			fmt.Println(s)
+			fmt.Println("Stack trace for this error:")
+			debug.PrintStack()
+			os.Exit(1)
+		}
+	default:
+		s := "In mat.%s, 0 or 2 arguments must be passed, but %d was received.\n"
+		s = fmt.Sprintf(s, "Std()", len(args))
+		fmt.Println(s)
+		fmt.Println("Stack trace for this error:")
+		debug.PrintStack()
+		os.Exit(1)
+	}
+	return std
 }
 
 /*
@@ -1089,7 +1080,7 @@ For example, if we have:
 	m := [[1.0, 2.0], [3.0, 4.0]]
 	n := [[5.0, 6.0], [7.0, 8.0]]
 	o := mat.Concat(m, n).Print // 1.0, 2.0, 5.0, 6.0
-															// 3.0, 4.0, 7.0, 8.0
+								// 3.0, 4.0, 7.0, 8.0
 
 */
 func (m *Mat) Concat(n *Mat) *Mat {

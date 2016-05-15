@@ -1,7 +1,6 @@
 package mat64
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -75,7 +74,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestFromSlice(t *testing.T) {
+func TestFrom2DSlice(t *testing.T) {
 	rows := 11
 	cols := 5
 	s := make([][]float64, rows)
@@ -98,13 +97,15 @@ func TestFromSlice(t *testing.T) {
 	for i := range s {
 		for j := range s[i] {
 			if s[i][j] != m.vals[idx] {
-				t.Errorf("slice[%d][%d]: %f, mat: %f", i, j,
-					s[i][j], m.vals[idx])
+				t.Errorf("slice[%d][%d]: %f, mat: %f", i, j, s[i][j], m.vals[idx])
 			}
 			idx++
 		}
 	}
-
+	s[5][2] = 1021.0
+	if m.At(5, 2) == s[5][2] {
+		t.Error("Adjusting the slice changed the mat")
+	}
 }
 
 func TestFrom1DSlice(t *testing.T) {
@@ -125,6 +126,10 @@ func TestFrom1DSlice(t *testing.T) {
 		if s[i] != m.vals[i] {
 			t.Errorf("slice[%d]: %f, mat: %f", i, s[i], m.vals[i])
 		}
+	}
+	s[12] = 231.0
+	if m.vals[12] == s[12] {
+		t.Error("Adjusting the slice changed the mat")
 	}
 }
 
@@ -174,8 +179,7 @@ func TestReshape(t *testing.T) {
 	for i := 0; i < len(s); i++ {
 		s[i] = float64(i * 3)
 	}
-	m := From1DSlice(s)
-	m.Reshape(10, 12)
+	m := From1DSlice(s).Reshape(10, 12)
 	if m.r != 10 {
 		t.Errorf("expected rows = 10, got %d", m.r)
 	}
@@ -202,7 +206,7 @@ func TestDims(t *testing.T) {
 
 func TestVals(t *testing.T) {
 	m := New(22, 22)
-	m.Set(1.0)
+	m.SetAll(1.0)
 	s := m.Vals()
 	if len(s) != 22*22 {
 		t.Errorf("expected len(s) to be %d, got %d", 22*22, len(s))
@@ -214,7 +218,7 @@ func TestVals(t *testing.T) {
 	}
 }
 
-func TestToSlice(t *testing.T) {
+func TestTo2DSlice(t *testing.T) {
 	rows := 13
 	cols := 21
 	m := New(rows, cols)
@@ -232,11 +236,14 @@ func TestToSlice(t *testing.T) {
 	for i := range s {
 		for j := range s[i] {
 			if s[i][j] != m.vals[idx] {
-				t.Errorf("slice[%d][%d]: %f, mat: %f", i, j,
-					s[i][j], m.vals[idx])
+				t.Errorf("slice[%d][%d]: %f, mat: %f", i, j, s[i][j], m.vals[idx])
 			}
 			idx++
 		}
+	}
+	s[11][2] = 11113123.0
+	if m.At(12, 2) == s[11][2] {
+		t.Error("Adjusting the slice changed the mat")
 	}
 }
 
@@ -272,15 +279,14 @@ func TestAt(t *testing.T) {
 	}
 }
 
-func TestMap(t *testing.T) {
+func TestForeach(t *testing.T) {
 	rows := 132
 	cols := 24
 	f := func(i *float64) {
 		*i = 1.0
 		return
 	}
-	m := New(rows, cols)
-	m.Map(f)
+	m := New(rows, cols).Foreach(f)
 	for i := 0; i < rows*cols; i++ {
 		if m.vals[i] != 1.0 {
 			t.Errorf("At %d, expected 1.0, got %f", i, m.vals[i])
@@ -288,41 +294,23 @@ func TestMap(t *testing.T) {
 	}
 }
 
-func TestOnes(t *testing.T) {
-	rows := 13
-	cols := 7
-	m := New(rows, cols)
-	m.Set(1.0)
-	for i := 0; i < rows*cols; i++ {
-		if m.vals[i] != 1.0 {
-			t.Errorf("At %d, expected 1.0, got %f", i, m.vals[i])
-		}
-	}
-}
-
-func TestInc(t *testing.T) {
-	rows := 17
-	cols := 3
-	m := New(rows, cols)
-	for i := range m.vals {
-		m.vals[i] = float64(i)
-	}
-	for i := 0; i < rows*cols; i++ {
-		if m.vals[i] != float64(i) {
-			t.Errorf("At %d, expected %f, got %f", i, float64(i), m.vals[i])
+func TestSetAll(t *testing.T) {
+	row := 3
+	col := 4
+	val := 11.0
+	m := New(row, col).SetAll(val)
+	for i := 0; i < row*col; i++ {
+		if m.vals[i] != val {
+			t.Errorf("at index %d, not equal to %f", i, val)
 		}
 	}
 }
 
 func TestSet(t *testing.T) {
-	row := 3
-	col := 4
-	val := 11.0
-	m := New(row, col).Set(val)
-	for i := 0; i < row*col; i++ {
-		if m.vals[i] != val {
-			t.Errorf("at index %d, not equal to %f", i, val)
-		}
+	m := New(5)
+	m.Set(2, 3, 10.0)
+	if m.vals[13] != 10.0 {
+		t.Errorf("expected 10.0, got %f", m.vals[13])
 	}
 }
 
@@ -360,6 +348,15 @@ func TestCol(t *testing.T) {
 		got := m.Col(i)
 		for j := 0; j < row; j++ {
 			if got.vals[j] != m.vals[j*m.c+i] {
+				t.Errorf("At index %v Col(%v), got %f, want %f", j, i,
+					got.vals[j], m.vals[j*m.c+i])
+			}
+		}
+	}
+	for i := col; i < 0; i-- {
+		got := m.Col(-i)
+		for j := 0; j < row; j++ {
+			if got.vals[j] != m.vals[j*m.c+(row-i)] {
 				t.Errorf("At index %v Col(%v), got %f, want %f", j, i,
 					got.vals[j], m.vals[j*m.c+i])
 			}
@@ -477,7 +474,7 @@ func TestAll(t *testing.T) {
 		}
 		return false
 	}
-	m.Set(1.0)
+	m.SetAll(1.0)
 	if m.All(notOne) {
 		t.Errorf("m.Ones() has non-one values in it")
 	}
@@ -503,7 +500,7 @@ func TestAny(t *testing.T) {
 		}
 		return false
 	}
-	m.Set(1.0)
+	m.SetAll(1.0)
 	if !m.Any(one) {
 		t.Errorf("m.Ones() has no values equal to 1.0 in it")
 	}
@@ -515,10 +512,10 @@ func TestMul(t *testing.T) {
 		m.vals[i] = float64(i)
 	}
 	n := m.Copy()
-	m.Mul(m)
+	m = m.Mul(m)
 	for i := 0; i < 110; i++ {
 		if m.vals[i] != n.vals[i]*n.vals[i] {
-			t.Errorf("expected %f, got %f", n.vals[i]*n.vals[i], m.vals[i])
+			t.Errorf("at index %d, expected %f, got %f", i, n.vals[i]*n.vals[i], m.vals[i])
 		}
 	}
 }
@@ -534,7 +531,7 @@ func BenchmarkMul(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m.Mul(n)
+		_ = m.Mul(n)
 	}
 }
 
@@ -544,7 +541,7 @@ func TestAdd(t *testing.T) {
 		m.vals[i] = float64(i)
 	}
 	n := m.Copy()
-	m.Add(m)
+	m = m.Add(m)
 	for i := 0; i < 110; i++ {
 		if m.vals[i] != 2.0*n.vals[i] {
 			t.Errorf("expected %f, got %f", 2.0*n.vals[i], m.vals[i])
@@ -557,7 +554,7 @@ func TestSub(t *testing.T) {
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
-	m.Sub(m)
+	m = m.Sub(m)
 	for i := 0; i < 110; i++ {
 		if m.vals[i] != 0.0 {
 			t.Errorf("expected 0.0, got %f", m.vals[i])
@@ -571,7 +568,7 @@ func TestDiv(t *testing.T) {
 		m.vals[i] = float64(i)
 	}
 	m.vals[0] = 1.0
-	m.Div(m)
+	m = m.Div(m)
 	for i := 0; i < 110; i++ {
 		if m.vals[i] != 1.0 {
 			t.Errorf("expected 1.0, got %f", m.vals[i])
@@ -579,24 +576,10 @@ func TestDiv(t *testing.T) {
 	}
 }
 
-func TestScale(t *testing.T) {
-	m := New(12, 13)
-	for i := range m.vals {
-		m.vals[i] = float64(i)
-	}
-	n := m.Copy()
-	m.Scale(1.7)
-	for i := 0; i < m.r*m.c; i++ {
-		if m.vals[i] != 1.7*n.vals[i] {
-			t.Errorf("At %d, expected %f, got %f", i, 1.7*n.vals[i], m.vals[i])
-		}
-	}
-}
-
 func TestSum(t *testing.T) {
 	row := 12
 	col := 17
-	m := New(row, col).Set(1.0)
+	m := New(row, col).SetAll(1.0)
 	for i := 0; i < row; i++ {
 		q := m.Sum(0, i)
 		if q != float64(col) {
@@ -611,36 +594,36 @@ func TestSum(t *testing.T) {
 	}
 }
 
-func TestAverage(t *testing.T) {
+func TestAvg(t *testing.T) {
 	row := 12
 	col := 17
-	m := New(row, col).Set(1.0)
+	m := New(row, col).SetAll(1.0)
 	for i := 0; i < row; i++ {
-		q := m.Average(0, i)
+		q := m.Avg(0, i)
 		if q != 1.0 {
 			t.Errorf("at row %d expected average to be 1.0, got %f", i, q)
 		}
 	}
 	for i := 0; i < col; i++ {
-		q := m.Average(1, i)
+		q := m.Avg(1, i)
 		if q != 1.0 {
 			t.Errorf("at col %d expected average to be 1.0, got %f", i, q)
 		}
 	}
 }
 
-func TestProd(t *testing.T) {
+func TestPrd(t *testing.T) {
 	row := 12
 	col := 17
-	m := New(row, col).Set(1.0)
+	m := New(row, col).SetAll(1.0)
 	for i := 0; i < row; i++ {
-		q := m.Prod(0, i)
+		q := m.Prd(0, i)
 		if q != 1.0 {
 			t.Errorf("at row %d expected product to be 1.0, got %f", i, q)
 		}
 	}
 	for i := 0; i < col; i++ {
-		q := m.Prod(1, i)
+		q := m.Prd(1, i)
 		if q != 1.0 {
 			t.Errorf("at col %d expected product to be 1.0, got %f", i, q)
 		}
@@ -650,7 +633,7 @@ func TestProd(t *testing.T) {
 func TestStd(t *testing.T) {
 	row := 12
 	col := 17
-	m := New(row, col).Set(1.0)
+	m := New(row, col).SetAll(1.0)
 	for i := 0; i < row; i++ {
 		q := m.Std(0, i)
 		if q != 0.0 {
@@ -708,18 +691,6 @@ func BenchmarkDot(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = m.Dot(n)
 	}
-}
-
-func TestToString(t *testing.T) {
-	var (
-		row = 10
-		col = 4
-	)
-	m := New(row, col)
-	for i := range m.vals {
-		m.vals[i] = float64(i)
-	}
-	fmt.Println(m)
 }
 
 func TestAppendCol(t *testing.T) {
