@@ -1,6 +1,7 @@
 package mat64
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -86,7 +87,7 @@ func TestFrom2DSlice(t *testing.T) {
 			s[i][j] = float64(i + j)
 		}
 	}
-	m := From2DSlice(s)
+	m := FromData(s)
 	if len(m.vals) != rows*cols {
 		t.Errorf("expected length of mat to be %d, but got %d", rows*cols, len(m.vals))
 	}
@@ -115,7 +116,7 @@ func TestFrom1DSlice(t *testing.T) {
 	for i := 0; i < len(s); i++ {
 		s[i] = float64(i * i)
 	}
-	m := FromData(rows, cols, s)
+	m := FromData(s, cols)
 	if len(m.vals) != rows*cols {
 		t.Errorf("expected length of mat to be %d, but got %d", rows*cols, len(m.vals))
 	}
@@ -179,7 +180,7 @@ func TestReshape(t *testing.T) {
 	for i := 0; i < len(s); i++ {
 		s[i] = float64(i * 3)
 	}
-	m := FromData(1, 120, s).Reshape(10, 12)
+	m := FromData(s).Reshape(10, 12)
 	if m.r != 10 {
 		t.Errorf("expected rows = 10, got %d", m.r)
 	}
@@ -711,7 +712,7 @@ func TestAppendCol(t *testing.T) {
 
 func TestAppendRow(t *testing.T) {
 	var (
-		row = 10
+		row = 3
 		col = 4
 	)
 	m := New(row, col)
@@ -719,9 +720,32 @@ func TestAppendRow(t *testing.T) {
 		m.vals[i] = float64(i)
 	}
 	v := make([]float64, col)
+	for i := range v {
+		v[i] = float64(i * i * i)
+	}
 	m.AppendRow(v)
 	if m.r != row+1 {
 		t.Errorf("Expected number of rows to be %d, but got %d", row+1, m.r)
+	}
+	fmt.Println(m)
+	m.AppendRow(v)
+	if m.r != row+2 {
+		t.Errorf("Expected number of rows to be %d, but got %d", row+2, m.r)
+	}
+	m.AppendRow(v)
+	fmt.Println(m)
+	if m.r != row+3 {
+		t.Errorf("Expected number of rows to be %d, but got %d", row+3, m.r)
+	}
+	m.AppendRow(v)
+	fmt.Println(m)
+	if m.r != row+4 {
+		t.Errorf("Expected number of rows to be %d, but got %d", row+4, m.r)
+	}
+	m.AppendRow(v)
+	fmt.Println(m)
+	if m.r != row+5 {
+		t.Errorf("Expected number of rows to be %d, but got %d", row+5, m.r)
 	}
 }
 

@@ -1,7 +1,7 @@
 package mat64
 
 /*
-Package mat implements a "mat" object, which behaves like a 2-dimensional array
+Package mat64 implements a "mat" object, which behaves like a 2-dimensional array
 or list in other programming languages. Under the hood, the mat object is a
 flat slice, which provides for optimal performance in Go, while the methods
 and constructors provide for a higher level of performance and abstraction
@@ -77,6 +77,11 @@ func New(dims ...int) *Mat {
 	m := &Mat{}
 	switch len(dims) {
 	case 0:
+		m = &Mat{
+			0,
+			0,
+			make([]float64, 0),
+		}
 	case 1:
 		m = &Mat{
 			dims[0],
@@ -96,7 +101,7 @@ func New(dims ...int) *Mat {
 			make([]float64, dims[0]*dims[1], dims[2]),
 		}
 	default:
-		s := "In mat.%s expected 0 to 3 arguments, but received %d"
+		s := "In mat64.%s expected 0 to 3 arguments, but received %d"
 		s = fmt.Sprintf(s, "New()", len(dims))
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
@@ -107,35 +112,115 @@ func New(dims ...int) *Mat {
 }
 
 /*
-From2DSlice generated a mat object from a [][]float64 slice. The slice is
-assumed to be non-jagged, meaning that each row contains the same
-number of elements.
+FromData creates a mat object from a []float64 or a [][]float64 slice.
 */
-func From2DSlice(s [][]float64) *Mat {
-	m := New(len(s), len(s[0]), len(s)*len(s[0])*2)
-	for i := range s {
-		for j := range s[i] {
-			m.vals[i*len(s[0])+j] = s[i][j]
+func FromData(data interface{}, dims ...int) *Mat {
+	m := New()
+	switch v := data.(type) {
+	case []float64:
+		switch len(dims) {
+		case 0:
+			m.vals = make([]float64, len(v), len(v)*2)
+			copy(m.vals, v)
+			m.r, m.c = 1, len(v)
+		case 1:
+			if dims[0] != len(v) {
+				s := "In mat64.%s, an one dimentional slice of data and a single int were passed.\n"
+				s += "However, the int (%d) is not equal to the length of the data (%d)."
+				s = fmt.Sprintf(s, "FromData()", dims[0], len(v))
+				fmt.Println(s)
+				fmt.Println("Stack trace for this error:")
+				debug.PrintStack()
+				os.Exit(1)
+			}
+			m.vals = make([]float64, dims[0], dims[0]*2)
+			copy(m.vals, v)
+			m.r, m.c = dims[0], 1
+		case 2:
+			if dims[0]*dims[1] != len(v) {
+				s := "In mat64.%s, the number of elements in the request mat is %d, but\n"
+				s += "the number of elements in the data slice is %d. They must be equal."
+				s = fmt.Sprintf(s, "FromData()", dims[0]*dims[1], len(v))
+				fmt.Println(s)
+				fmt.Println("Stack trace for this error:")
+				debug.PrintStack()
+				os.Exit(1)
+			}
+			m.vals = make([]float64, dims[0]*dims[1], dims[0]*dims[1]*2)
+			copy(m.vals, v)
+			m.r, m.c = dims[0], dims[1]
+		default:
+			s := "In mat64.%s, the number of passed integers after the data is %d, but\n"
+			s += "this function expects 0, 1, or 2 integers. Please review the docs for\n"
+			s += "this function and adjust the number of integers passed accordingly."
+			s = fmt.Sprintf(s, "FromData()", len(dims))
+			fmt.Println(s)
+			fmt.Println("Stack trace for this error:")
+			debug.PrintStack()
+			os.Exit(1)
 		}
-	}
-	return m
-}
-
-/*
-FromData creates a mat object from a []float64 slice.
-*/
-func FromData(r, c int, s []float64) *Mat {
-	if r*c != len(s) {
-		s := "In mat.%s, the number of elements in the request mat is not equal to\n"
-		s += "the number of passed element: %d, vs %d."
-		s = fmt.Sprintf(s, "FromData()", r*c, len(s))
-		fmt.Println(s)
+	case [][]float64:
+		switch len(dims) {
+		case 0:
+			m.vals = make([]float64, len(v)*len(v[0]), len(v)*len(v[0])*2)
+			for i := range v {
+				for j := range v[i] {
+					m.vals[i*len(v[0])+j] = v[i][j]
+				}
+			}
+			m.r, m.c = len(v), len(v[0])
+		case 1:
+			if dims[0]*2 != len(v)*len(v[0]) {
+				s := "In mat64.%s, the requested squared mat (%d by %d) does not\n"
+				s += "match the length and width of the data slice (%d and %d)."
+				s = fmt.Sprintf(s, "FromData()", dims[0], dims[0], len(v), len(v[0]))
+				fmt.Println(s)
+				fmt.Println("Stack trace for this error:")
+				debug.PrintStack()
+				os.Exit(1)
+			}
+			m.vals = make([]float64, dims[0]*dims[0], dims[0]*dims[0]*2)
+			for i := range v {
+				for j := range v[i] {
+					m.vals[i*len(v[0])+j] = v[i][j]
+				}
+			}
+			m.r, m.c = len(v), len(v[0])
+		case 2:
+			if dims[0] != len(v) || dims[1] != len(v[0]) {
+				s := "In mat64.%s, the requested number of rows and columns (%d and %d) does not\n"
+				s += "match the length and width of the data slice (%d and %d)."
+				s = fmt.Sprintf(s, "FromData()", dims[0], dims[1], len(v), len(v[0]))
+				fmt.Println(s)
+				fmt.Println("Stack trace for this error:")
+				debug.PrintStack()
+				os.Exit(1)
+			}
+			m.vals = make([]float64, dims[0]*dims[1], dims[0]*dims[1]*2)
+			for i := range v {
+				for j := range v[i] {
+					m.vals[i*len(v[0])+j] = v[i][j]
+				}
+			}
+			m.r, m.c = len(v), len(v[0])
+		default:
+			s := "In mat64.%s, the number of passed integers after the data is %d, but\n"
+			s += "this function expects 0, 1, or 2 integers. Please review the docs for\n"
+			s += "this function and adjust the number of integers passed accordingly."
+			s = fmt.Sprintf(s, "FromData()", len(dims))
+			fmt.Println(s)
+			fmt.Println("Stack trace for this error:")
+			debug.PrintStack()
+			os.Exit(1)
+		}
+	default:
+		s := "In mat64.%s, expected either []float64 or [][]float64 data."
+		s += "However, data of type %v was received."
+		s = fmt.Sprintf(s, "FromData()", v)
 		fmt.Println("Stack trace for this error:")
 		debug.PrintStack()
 		os.Exit(1)
 	}
-	m := New(r, c)
-	copy(m.vals, s)
 	return m
 }
 
@@ -158,7 +243,7 @@ be very large.
 func FromCSV(filename string) *Mat {
 	f, err := os.Open(filename)
 	if err != nil {
-		s := "In mat.%s, cannot open %s due to error: %v.\n"
+		s := "In mat64.%s, cannot open %s due to error: %v.\n"
 		s = fmt.Sprintf(s, "FromCSV()", filename, err)
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
@@ -174,7 +259,7 @@ func FromCSV(filename string) *Mat {
 	// number of entries in each line is the same as the first line.
 	str, err := r.Read()
 	if err != nil {
-		s := "In mat.%s, cannot read from %s due to error: %v.\n"
+		s := "In mat64.%s, cannot read from %s due to error: %v.\n"
 		s = fmt.Sprintf(s, "FromCSV()", filename, err)
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
@@ -191,7 +276,7 @@ func FromCSV(filename string) *Mat {
 		for i := range str {
 			row[i], err = strconv.ParseFloat(str[i], 64)
 			if err != nil {
-				s := "In mat.%s, item %d in line %d is %s, which cannot\n"
+				s := "In mat64.%s, item %d in line %d is %s, which cannot\n"
 				s += "be converted to a float64 due to: %v"
 				s = fmt.Sprintf(s, "FromCSV()", i, line, str[i], err)
 				fmt.Println(s)
@@ -207,7 +292,7 @@ func FromCSV(filename string) *Mat {
 			if err == io.EOF {
 				break
 			}
-			s := "In mat.%s, cannot read from %s due to error: %v.\n"
+			s := "In mat64.%s, cannot read from %s due to error: %v.\n"
 			s = fmt.Sprintf(s, "FromCSV()", filename, err)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
@@ -216,7 +301,7 @@ func FromCSV(filename string) *Mat {
 		}
 		line++
 		if len(str) != len(row) {
-			s := "In mat.%s, line %d in %s has %d entries. The first line\n"
+			s := "In mat64.%s, line %d in %s has %d entries. The first line\n"
 			s += "(line 1) has %d entries.\n"
 			s += "Creation of a *Mat from jagged slices is not supported.\n"
 			s = fmt.Sprintf(s, "Load()", filename, err)
@@ -246,7 +331,7 @@ func Rand(r, c int, args ...float64) *Mat {
 		from := args[0]
 		to := args[1]
 		if !(from < to) {
-			s := "In mat.%s the first argument, %f, is not less than the\n"
+			s := "In mat64.%s the first argument, %f, is not less than the\n"
 			s += "second argument, %f. The first argument must be strictly\n"
 			s += "less than the second.\n"
 			s = fmt.Sprintf(s, "Rand()", from, to)
@@ -259,7 +344,7 @@ func Rand(r, c int, args ...float64) *Mat {
 			m.vals[i] = rand.Float64()*(to-from) + from
 		}
 	default:
-		s := "In mat.%s expected 0 to 2 arguments, but received %d."
+		s := "In mat64.%s expected 0 to 2 arguments, but received %d."
 		s = fmt.Sprintf(s, "Rand()", len(args))
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
@@ -276,7 +361,7 @@ the values of the mat does not change with this function.
 */
 func (m *Mat) Reshape(rows, cols int) *Mat {
 	if rows*cols != m.r*m.c {
-		s := "In mat.%s, The total number of entries of the old and new shape\n"
+		s := "In mat64.%s, The total number of entries of the old and new shape\n"
 		s += "must match.\n"
 		s = fmt.Sprintf(s, "Reshape()")
 		fmt.Println(s)
@@ -328,7 +413,7 @@ number of entries in each line is equal to the columns of the mat object.
 func (m *Mat) ToCSV(fileName string) {
 	f, err := os.Create(fileName)
 	if err != nil {
-		s := "In mat.%s, cannot open %s due to error: %v.\n"
+		s := "In mat64.%s, cannot open %s due to error: %v.\n"
 		s = fmt.Sprintf(s, "ToCSV()", fileName, err)
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
@@ -352,7 +437,7 @@ func (m *Mat) ToCSV(fileName string) {
 	}
 	_, err = f.Write([]byte(str))
 	if err != nil {
-		s := "In mat.%s, cannot write to %s due to error: %v.\n"
+		s := "In mat64.%s, cannot write to %s due to error: %v.\n"
 		s = fmt.Sprintf(s, "ToCSV()", fileName, err)
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
@@ -405,7 +490,7 @@ number of rows of the original mat, and the number of columns is equal to 1.
 */
 func (m *Mat) Col(x int) *Mat {
 	if (x >= m.c) || (x < -m.c) {
-		s := "In mat.%s the requested column %d is outside of bounds [%d, %d)\n"
+		s := "In mat64.%s the requested column %d is outside of bounds [%d, %d)\n"
 		s = fmt.Sprintf(s, "Col()", x, m.c, m.c)
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
@@ -433,7 +518,7 @@ the number of columns is equal to the number of columns of the original mat.
 */
 func (m *Mat) Row(x int) *Mat {
 	if (x >= m.r) || (x < -m.r) {
-		s := "In mat.%s the requested row %d is outside of the bounds [-%d, %d)\n"
+		s := "In mat64.%s the requested row %d is outside of the bounds [-%d, %d)\n"
 		s = fmt.Sprintf(s, "Row()", x, m.r, m.r)
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
@@ -564,7 +649,7 @@ func (m *Mat) Mul(val interface{}) *Mat {
 		}
 	case *Mat:
 		if v.r != n.r {
-			s := "In mat.%s, the number of the rows of the receiver is %d\n"
+			s := "In mat64.%s, the number of the rows of the receiver is %d\n"
 			s += "but the number of rows of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Mul()", n.r, v.r)
@@ -574,7 +659,7 @@ func (m *Mat) Mul(val interface{}) *Mat {
 			os.Exit(1)
 		}
 		if v.c != n.c {
-			s := "In mat.%s, the number of the columns of the receiver is %d\n"
+			s := "In mat64.%s, the number of the columns of the receiver is %d\n"
 			s += "but the number of columns of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Mul()", n.c, v.c)
@@ -587,7 +672,7 @@ func (m *Mat) Mul(val interface{}) *Mat {
 			n.vals[i] *= v.vals[i]
 		}
 	default:
-		s := "In mat.%s, the passed value must be a float64 or *Mat, however, %v\n"
+		s := "In mat64.%s, the passed value must be a float64 or *Mat, however, %v\n"
 		s += "was received.\n"
 		s = fmt.Sprintf(s, "Mul()", v)
 		fmt.Println(s)
@@ -607,7 +692,7 @@ func (m *Mat) Add(val interface{}) *Mat {
 		}
 	case *Mat:
 		if v.r != n.r {
-			s := "In mat.%s, the number of the rows of the receiver is %d\n"
+			s := "In mat64.%s, the number of the rows of the receiver is %d\n"
 			s += "but the number of rows of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Add()", n.r, v.r)
@@ -617,7 +702,7 @@ func (m *Mat) Add(val interface{}) *Mat {
 			os.Exit(1)
 		}
 		if v.c != n.c {
-			s := "In mat.%s, the number of the columns of the receiver is %d\n"
+			s := "In mat64.%s, the number of the columns of the receiver is %d\n"
 			s += "but the number of columns of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Add()", n.c, v.c)
@@ -630,7 +715,7 @@ func (m *Mat) Add(val interface{}) *Mat {
 			n.vals[i] += v.vals[i]
 		}
 	default:
-		s := "In mat.%s, the passed value must be a float64 or *Mat, however, %v\n"
+		s := "In mat64.%s, the passed value must be a float64 or *Mat, however, %v\n"
 		s += "was received.\n"
 		s = fmt.Sprintf(s, "Add()", v)
 		fmt.Println(s)
@@ -650,7 +735,7 @@ func (m *Mat) Sub(val interface{}) *Mat {
 		}
 	case *Mat:
 		if v.r != n.r {
-			s := "In mat.%s, the number of the rows of the receiver is %d\n"
+			s := "In mat64.%s, the number of the rows of the receiver is %d\n"
 			s += "but the number of rows of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Sub()", n.r, v.r)
@@ -660,7 +745,7 @@ func (m *Mat) Sub(val interface{}) *Mat {
 			os.Exit(1)
 		}
 		if v.c != n.c {
-			s := "In mat.%s, the number of the columns of the receiver is %d\n"
+			s := "In mat64.%s, the number of the columns of the receiver is %d\n"
 			s += "but the number of columns of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Sub()", n.c, v.c)
@@ -673,7 +758,7 @@ func (m *Mat) Sub(val interface{}) *Mat {
 			n.vals[i] -= v.vals[i]
 		}
 	default:
-		s := "In mat.%s, the passed value must be a float64 or *Mat, however, %v\n"
+		s := "In mat64.%s, the passed value must be a float64 or *Mat, however, %v\n"
 		s += "was received.\n"
 		s = fmt.Sprintf(s, "Sub()", v)
 		fmt.Println(s)
@@ -693,7 +778,7 @@ func (m *Mat) Div(val interface{}) *Mat {
 		}
 	case *Mat:
 		if v.r != n.r {
-			s := "In mat.%s, the number of the rows of the receiver is %d\n"
+			s := "In mat64.%s, the number of the rows of the receiver is %d\n"
 			s += "but the number of rows of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Div()", n.r, v.r)
@@ -703,7 +788,7 @@ func (m *Mat) Div(val interface{}) *Mat {
 			os.Exit(1)
 		}
 		if v.c != n.c {
-			s := "In mat.%s, the number of the columns of the receiver is %d\n"
+			s := "In mat64.%s, the number of the columns of the receiver is %d\n"
 			s += "but the number of columns of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Div()", n.c, v.c)
@@ -716,7 +801,7 @@ func (m *Mat) Div(val interface{}) *Mat {
 			n.vals[i] /= v.vals[i]
 		}
 	default:
-		s := "In mat.%s, the passed value must be a float64 or *Mat, however, %v\n"
+		s := "In mat64.%s, the passed value must be a float64 or *Mat, however, %v\n"
 		s += "was received.\n"
 		s = fmt.Sprintf(s, "Div()", v)
 		fmt.Println(s)
@@ -738,7 +823,7 @@ func (m *Mat) Sum(args ...int) float64 {
 		axis, slice := args[0], args[1]
 		if axis == 0 {
 			if (slice >= m.r) || (slice < 0) {
-				s := "In mat.%s the row %d is outside of bounds [0, %d)\n"
+				s := "In mat64.%s the row %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Sum()", slice, m.r)
 				fmt.Println(s)
 				fmt.Println("Stack trace for this error:")
@@ -750,7 +835,7 @@ func (m *Mat) Sum(args ...int) float64 {
 			}
 		} else if axis == 1 {
 			if (slice >= m.c) || (slice < 0) {
-				s := "In mat.%s the column %d is outside of bounds [0, %d)\n"
+				s := "In mat64.%s the column %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Sum()", slice, m.c)
 				fmt.Println(s)
 				fmt.Println("Stack trace for this error:")
@@ -761,7 +846,7 @@ func (m *Mat) Sum(args ...int) float64 {
 				sum += m.vals[i*m.c+slice]
 			}
 		} else {
-			s := "In mat.%s, the first argument must be 0 or 1, however %d "
+			s := "In mat64.%s, the first argument must be 0 or 1, however %d "
 			s += "was received.\n"
 			s = fmt.Sprintf(s, "Sum()", axis)
 			fmt.Println(s)
@@ -770,7 +855,7 @@ func (m *Mat) Sum(args ...int) float64 {
 			os.Exit(1)
 		}
 	default:
-		s := "In mat.%s, 0 or 2 arguments must be passed, but %d was received.\n"
+		s := "In mat64.%s, 0 or 2 arguments must be passed, but %d was received.\n"
 		s = fmt.Sprintf(s, "Sum()", len(args))
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
@@ -792,7 +877,7 @@ func (m *Mat) Avg(args ...int) float64 {
 		axis, slice := args[0], args[1]
 		if axis == 0 {
 			if (slice >= m.r) || (slice < 0) {
-				s := "In mat.%s the row %d is outside of bounds [0, %d)\n"
+				s := "In mat64.%s the row %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Avg()", slice, m.r)
 				fmt.Println(s)
 				fmt.Println("Stack trace for this error:")
@@ -805,7 +890,7 @@ func (m *Mat) Avg(args ...int) float64 {
 			sum /= float64(m.c)
 		} else if axis == 1 {
 			if (slice >= m.c) || (slice < 0) {
-				s := "In mat.%s the column %d is outside of bounds [0, %d)\n"
+				s := "In mat64.%s the column %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Avg()", slice, m.c)
 				fmt.Println(s)
 				fmt.Println("Stack trace for this error:")
@@ -817,7 +902,7 @@ func (m *Mat) Avg(args ...int) float64 {
 			}
 			sum /= float64(m.r)
 		} else {
-			s := "In mat.%s, the first argument must be 0 or 1, however %d "
+			s := "In mat64.%s, the first argument must be 0 or 1, however %d "
 			s += "was received.\n"
 			s = fmt.Sprintf(s, "Avg()", axis)
 			fmt.Println(s)
@@ -826,7 +911,7 @@ func (m *Mat) Avg(args ...int) float64 {
 			os.Exit(1)
 		}
 	default:
-		s := "In mat.%s, 0 or 2 arguments must be passed, but %d was received.\n"
+		s := "In mat64.%s, 0 or 2 arguments must be passed, but %d was received.\n"
 		s = fmt.Sprintf(s, "Avg()", len(args))
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
@@ -847,7 +932,7 @@ func (m *Mat) Prd(args ...int) float64 {
 		axis, slice := args[0], args[1]
 		if axis == 0 {
 			if (slice >= m.r) || (slice < 0) {
-				s := "In mat.%s the row %d is outside of bounds [0, %d)\n"
+				s := "In mat64.%s the row %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Prd()", slice, m.r)
 				fmt.Println(s)
 				fmt.Println("Stack trace for this error:")
@@ -859,7 +944,7 @@ func (m *Mat) Prd(args ...int) float64 {
 			}
 		} else if axis == 1 {
 			if (slice >= m.c) || (slice < 0) {
-				s := "In mat.%s the column %d is outside of bounds [0, %d)\n"
+				s := "In mat64.%s the column %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Prd()", slice, m.c)
 				fmt.Println(s)
 				fmt.Println("Stack trace for this error:")
@@ -870,7 +955,7 @@ func (m *Mat) Prd(args ...int) float64 {
 				prd *= m.vals[i*m.c+slice]
 			}
 		} else {
-			s := "In mat.%s, the first argument must be 0 or 1, however %d "
+			s := "In mat64.%s, the first argument must be 0 or 1, however %d "
 			s += "was received.\n"
 			s = fmt.Sprintf(s, "Prd()", axis)
 			fmt.Println(s)
@@ -879,7 +964,7 @@ func (m *Mat) Prd(args ...int) float64 {
 			os.Exit(1)
 		}
 	default:
-		s := "In mat.%s, 0 or 2 arguments must be passed, but %d was received.\n"
+		s := "In mat64.%s, 0 or 2 arguments must be passed, but %d was received.\n"
 		s = fmt.Sprintf(s, "Prd()", len(args))
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
@@ -903,7 +988,7 @@ func (m *Mat) Std(args ...int) float64 {
 		axis, slice := args[0], args[1]
 		if axis == 0 {
 			if (slice >= m.r) || (slice < 0) {
-				s := "In mat.%s the row %d is outside of bounds [0, %d)\n"
+				s := "In mat64.%s the row %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Std()", slice, m.r)
 				fmt.Println(s)
 				fmt.Println("Stack trace for this error:")
@@ -918,7 +1003,7 @@ func (m *Mat) Std(args ...int) float64 {
 			std = math.Sqrt(sum / float64(len(m.vals)))
 		} else if axis == 1 {
 			if (slice >= m.c) || (slice < 0) {
-				s := "In mat.%s the column %d is outside of bounds [0, %d)\n"
+				s := "In mat64.%s the column %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Std()", slice, m.c)
 				fmt.Println(s)
 				fmt.Println("Stack trace for this error:")
@@ -932,7 +1017,7 @@ func (m *Mat) Std(args ...int) float64 {
 			}
 			std = math.Sqrt(sum / float64(len(m.vals)))
 		} else {
-			s := "In mat.%s, the first argument must be 0 or 1, however %d "
+			s := "In mat64.%s, the first argument must be 0 or 1, however %d "
 			s += "was received.\n"
 			s = fmt.Sprintf(s, "Std()", axis)
 			fmt.Println(s)
@@ -941,7 +1026,7 @@ func (m *Mat) Std(args ...int) float64 {
 			os.Exit(1)
 		}
 	default:
-		s := "In mat.%s, 0 or 2 arguments must be passed, but %d was received.\n"
+		s := "In mat64.%s, 0 or 2 arguments must be passed, but %d was received.\n"
 		s = fmt.Sprintf(s, "Std()", len(args))
 		fmt.Println(s)
 		fmt.Println("Stack trace for this error:")
@@ -968,7 +1053,7 @@ is a 5 by 10 mat whose element at row i and column j is given by:
 */
 func (m *Mat) Dot(n *Mat) *Mat {
 	if m.c != n.r {
-		s := "In mat.%s the number of columns of the first mat is %d\n"
+		s := "In mat64.%s the number of columns of the first mat is %d\n"
 		s += "which is not equal to the number of rows of the second mat,\n"
 		s += "which is %d. They must be equal.\n"
 		s = fmt.Sprintf(s, "Dot()", m.c, n.r)
@@ -995,15 +1080,23 @@ that the last line does not contain a newline.
 */
 func (m *Mat) String() string {
 	var str string
+	str += "["
 	for i := 0; i < m.r; i++ {
 		for j := 0; j < m.c; j++ {
+			if j == 0 {
+				str += "["
+			}
 			str += strconv.FormatFloat(m.vals[i*m.c+j], 'f', 14, 64)
-			str += " "
+			if j+1 != m.c {
+				str += ",\t"
+			}
 		}
 		if i+1 <= m.r {
-			str += "\n"
+			str += "]\n "
 		}
 	}
+	str = str[:len(str)-2] // take out the last newline.
+	str += "]\n"
 	return str
 }
 
@@ -1012,7 +1105,7 @@ AppendCol appends a column to the right side of a Mat.
 */
 func (m *Mat) AppendCol(v []float64) *Mat {
 	if m.r != len(v) {
-		s := "In mat.%s the number of rows of the reciever is %d, while\n"
+		s := "In mat64.%s the number of rows of the reciever is %d, while\n"
 		s += "the number of rows of the vector is %d. They must be equal.\n"
 		s = fmt.Sprintf(s, "AppendCol()", m.r, len(v))
 		fmt.Println(s)
@@ -1041,7 +1134,7 @@ AppendRow appends a row to the bottom of a Mat.
 */
 func (m *Mat) AppendRow(v []float64) *Mat {
 	if m.c != len(v) {
-		s := "In mat.%s the number of cols of the receiver is %d, while\n"
+		s := "In mat64.%s the number of cols of the receiver is %d, while\n"
 		s += "the number of rows of the vector is %d. They must be equal.\n"
 		s = fmt.Sprintf(s, "AppendRow()", m.c, len(v))
 		fmt.Println(s)
@@ -1049,7 +1142,19 @@ func (m *Mat) AppendRow(v []float64) *Mat {
 		debug.PrintStack()
 		os.Exit(1)
 	}
-	m.vals = append(m.vals, v...)
+	if cap(m.vals) < (len(m.vals) + len(v)) {
+		newVals := make([]float64, len(m.vals)+len(v), len(m.vals)+len(v)*2)
+		lastElem := len(m.vals)
+		for i := range m.vals {
+			newVals[i] = m.vals[i]
+		}
+		for i := range v {
+			newVals[lastElem+i] = v[i]
+		}
+		m.vals = newVals
+	} else {
+		m.vals = append(m.vals, v...)
+	}
 	m.r++
 	return m
 }
@@ -1067,7 +1172,7 @@ For example, if we have:
 */
 func (m *Mat) Concat(n *Mat) *Mat {
 	if m.r != n.r {
-		s := "In mat.%s the number of rows of the receiver is %d, while\n"
+		s := "In mat64.%s the number of rows of the receiver is %d, while\n"
 		s += "the number of rows of the second Mat is %d. They must be equal.\n"
 		s = fmt.Sprintf(s, "Concat()", m.r, n.r)
 		fmt.Println(s)
