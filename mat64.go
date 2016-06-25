@@ -448,23 +448,17 @@ func (m *Mat) Vals() []float64 {
 }
 
 /*
-To2DSlice returns the values of a mat object as a 2D slice of float64s.
+ToSlice returns the values of a mat object as a 2D slice of float64s.
 */
-func (m *Mat) ToSlice() interface{} {
-	if m.c == 1 || m.r == 1 {
-		s := make([]float64, m.c*m.r, m.c*m.r*2)
-		copy(s, m.vals)
-		return s
-	} else {
-		s := make([][]float64, m.r)
-		for i := range s {
-			s[i] = make([]float64, m.c)
-			for j := range s[i] {
-				s[i][j] = m.vals[i*m.c+j]
-			}
+func (m *Mat) ToSlice() [][]float64 {
+	s := make([][]float64, m.r)
+	for i := range s {
+		s[i] = make([]float64, m.c)
+		for j := range s[i] {
+			s[i][j] = m.vals[i*m.c+j]
 		}
-		return s
 	}
+	return s
 }
 
 /*
@@ -564,7 +558,6 @@ func (m *Mat) Col(x int) *Mat {
 		for r := 0; r < m.r; r++ {
 			v.vals[r] = m.vals[r*m.c+x]
 		}
-
 	} else {
 		for r := 0; r < m.r; r++ {
 			v.vals[r] = m.vals[r*m.c+(m.c+x)]
@@ -703,35 +696,34 @@ func (m *Mat) Any(f func(*float64) bool) bool {
 }
 
 func (m *Mat) Mul(val interface{}) *Mat {
-	n := m.Copy()
 	switch v := val.(type) {
 	case float64:
-		for i := range n.vals {
-			n.vals[i] *= v
+		for i := range m.vals {
+			m.vals[i] *= v
 		}
 	case *Mat:
-		if v.r != n.r {
+		if v.r != m.r {
 			s := "In mat64.%s, the number of the rows of the receiver is %d\n"
 			s += "but the number of rows of the passed mat is %d. They must\n"
 			s += "match.\n"
-			s = fmt.Sprintf(s, "Mul()", n.r, v.r)
+			s = fmt.Sprintf(s, "Mul()", m.r, v.r)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-		if v.c != n.c {
+		if v.c != m.c {
 			s := "In mat64.%s, the number of the columns of the receiver is %d\n"
 			s += "but the number of columns of the passed mat is %d. They must\n"
 			s += "match.\n"
-			s = fmt.Sprintf(s, "Mul()", n.c, v.c)
+			s = fmt.Sprintf(s, "Mul()", m.c, v.c)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-		for i := range n.vals {
-			n.vals[i] *= v.vals[i]
+		for i := range m.vals {
+			m.vals[i] *= v.vals[i]
 		}
 	default:
 		s := "In mat64.%s, the passed value must be a float64 or *Mat, however, %v\n"
@@ -742,39 +734,38 @@ func (m *Mat) Mul(val interface{}) *Mat {
 		debug.PrintStack()
 		os.Exit(1)
 	}
-	return n
+	return m
 }
 
 func (m *Mat) Add(val interface{}) *Mat {
-	n := m.Copy()
 	switch v := val.(type) {
 	case float64:
-		for i := range n.vals {
-			n.vals[i] += v
+		for i := range m.vals {
+			m.vals[i] += v
 		}
 	case *Mat:
-		if v.r != n.r {
+		if v.r != m.r {
 			s := "In mat64.%s, the number of the rows of the receiver is %d\n"
 			s += "but the number of rows of the passed mat is %d. They must\n"
 			s += "match.\n"
-			s = fmt.Sprintf(s, "Add()", n.r, v.r)
+			s = fmt.Sprintf(s, "Add()", m.r, v.r)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-		if v.c != n.c {
+		if v.c != m.c {
 			s := "In mat64.%s, the number of the columns of the receiver is %d\n"
 			s += "but the number of columns of the passed mat is %d. They must\n"
 			s += "match.\n"
-			s = fmt.Sprintf(s, "Add()", n.c, v.c)
+			s = fmt.Sprintf(s, "Add()", m.c, v.c)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-		for i := range n.vals {
-			n.vals[i] += v.vals[i]
+		for i := range m.vals {
+			m.vals[i] += v.vals[i]
 		}
 	default:
 		s := "In mat64.%s, the passed value must be a float64 or *Mat, however, %v\n"
@@ -785,39 +776,38 @@ func (m *Mat) Add(val interface{}) *Mat {
 		debug.PrintStack()
 		os.Exit(1)
 	}
-	return n
+	return m
 }
 
 func (m *Mat) Sub(val interface{}) *Mat {
-	n := m.Copy()
 	switch v := val.(type) {
 	case float64:
-		for i := range n.vals {
-			n.vals[i] -= v
+		for i := range m.vals {
+			m.vals[i] -= v
 		}
 	case *Mat:
-		if v.r != n.r {
+		if v.r != m.r {
 			s := "In mat64.%s, the number of the rows of the receiver is %d\n"
 			s += "but the number of rows of the passed mat is %d. They must\n"
 			s += "match.\n"
-			s = fmt.Sprintf(s, "Sub()", n.r, v.r)
+			s = fmt.Sprintf(s, "Sub()", m.r, v.r)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-		if v.c != n.c {
+		if v.c != m.c {
 			s := "In mat64.%s, the number of the columns of the receiver is %d\n"
 			s += "but the number of columns of the passed mat is %d. They must\n"
 			s += "match.\n"
-			s = fmt.Sprintf(s, "Sub()", n.c, v.c)
+			s = fmt.Sprintf(s, "Sub()", m.c, v.c)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-		for i := range n.vals {
-			n.vals[i] -= v.vals[i]
+		for i := range m.vals {
+			m.vals[i] -= v.vals[i]
 		}
 	default:
 		s := "In mat64.%s, the passed value must be a float64 or *Mat, however, %v\n"
@@ -828,39 +818,38 @@ func (m *Mat) Sub(val interface{}) *Mat {
 		debug.PrintStack()
 		os.Exit(1)
 	}
-	return n
+	return m
 }
 
 func (m *Mat) Div(val interface{}) *Mat {
-	n := m.Copy()
 	switch v := val.(type) {
 	case float64:
-		for i := range n.vals {
-			n.vals[i] /= v
+		for i := range m.vals {
+			m.vals[i] /= v
 		}
 	case *Mat:
-		if v.r != n.r {
+		if v.r != m.r {
 			s := "In mat64.%s, the number of the rows of the receiver is %d\n"
 			s += "but the number of rows of the passed mat is %d. They must\n"
 			s += "match.\n"
-			s = fmt.Sprintf(s, "Div()", n.r, v.r)
+			s = fmt.Sprintf(s, "Div()", m.r, v.r)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-		if v.c != n.c {
+		if v.c != m.c {
 			s := "In mat64.%s, the number of the columns of the receiver is %d\n"
 			s += "but the number of columns of the passed mat is %d. They must\n"
 			s += "match.\n"
-			s = fmt.Sprintf(s, "Div()", n.c, v.c)
+			s = fmt.Sprintf(s, "Div()", m.c, v.c)
 			fmt.Println(s)
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
 		}
-		for i := range n.vals {
-			n.vals[i] /= v.vals[i]
+		for i := range m.vals {
+			m.vals[i] /= v.vals[i]
 		}
 	default:
 		s := "In mat64.%s, the passed value must be a float64 or *Mat, however, %v\n"
@@ -871,7 +860,7 @@ func (m *Mat) Div(val interface{}) *Mat {
 		debug.PrintStack()
 		os.Exit(1)
 	}
-	return n
+	return m
 }
 
 func (m *Mat) Sum(args ...int) float64 {
@@ -1177,7 +1166,7 @@ func (m *Mat) AppendCol(v []float64) *Mat {
 	}
 	// TODO: redo this by hand, instead of taking this shortcut... or check if
 	// this is a huge bottleneck
-	q := m.To2DSlice()
+	q := m.ToSlice()
 	for i := range q {
 		q[i] = append(q[i], v[i])
 	}
@@ -1228,8 +1217,7 @@ For example, if we have:
 
 	m := [[1.0, 2.0], [3.0, 4.0]]
 	n := [[5.0, 6.0], [7.0, 8.0]]
-	o := mat.Concat(m, n).Print // 1.0, 2.0, 5.0, 6.0
-								// 3.0, 4.0, 7.0, 8.0
+	o := m.Concat(n).Row(0) // [1.0, 2.0, 5.0, 6.0]
 
 */
 func (m *Mat) Concat(n *Mat) *Mat {
@@ -1242,9 +1230,9 @@ func (m *Mat) Concat(n *Mat) *Mat {
 		debug.PrintStack()
 		os.Exit(1)
 	}
-	q := m.To2DSlice()
+	q := m.ToSlice()
 	t := n.Vals()
-	r := n.To2DSlice()
+	r := n.ToSlice()
 	m.vals = append(m.vals, t...)
 	for i := range q {
 		q[i] = append(q[i], r[i]...)

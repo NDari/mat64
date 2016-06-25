@@ -1,7 +1,6 @@
 package mat64
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -727,23 +726,19 @@ func TestAppendRow(t *testing.T) {
 	if m.r != row+1 {
 		t.Errorf("Expected number of rows to be %d, but got %d", row+1, m.r)
 	}
-	fmt.Println(m)
 	m.AppendRow(v)
 	if m.r != row+2 {
 		t.Errorf("Expected number of rows to be %d, but got %d", row+2, m.r)
 	}
 	m.AppendRow(v)
-	fmt.Println(m)
 	if m.r != row+3 {
 		t.Errorf("Expected number of rows to be %d, but got %d", row+3, m.r)
 	}
 	m.AppendRow(v)
-	fmt.Println(m)
 	if m.r != row+4 {
 		t.Errorf("Expected number of rows to be %d, but got %d", row+4, m.r)
 	}
 	m.AppendRow(v)
-	fmt.Println(m)
 	if m.r != row+5 {
 		t.Errorf("Expected number of rows to be %d, but got %d", row+5, m.r)
 	}
