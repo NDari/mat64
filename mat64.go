@@ -1,5 +1,3 @@
-package mat64
-
 /*
 Package mat64 implements a "mat" object, which behaves like a 2-dimensional array
 or list in other programming languages. Under the hood, the mat object is a
@@ -13,6 +11,8 @@ immediately exits with signal 1. In such cases, the function/method in
 which the error was encountered is printed to the screen, in addition
 to the full stack trace, in order to help fix the issue rapidly.
 */
+package mat64
+
 import (
 	"encoding/csv"
 	"fmt"
@@ -113,6 +113,62 @@ func New(dims ...int) *Mat {
 
 /*
 FromData creates a mat object from a []float64 or a [][]float64 slice.
+This function is designed to do the "right thing" based on the type of
+the slice passed to it. The "right thing" based on each possible case
+is as follows:
+
+Assume that s is a [][]float64, and v is a []float64 for the examples
+below.
+
+	x := mat64.FromData(v)
+
+In this case, x.Dims() is (1, len(v)), and the values in x are the same
+as the values in v. x is essentially a row vector.
+
+Alternatively, this function can be invoked as:
+
+	x := mat64.FromData(v, len(v))
+
+In this case, x.Dims() is (len(v), 1), and the values in x are the same
+as the values in v. x is essentially a column vector.
+
+Finally for the case where the data is a []float64, the function can be
+invoked as:
+
+	x := mat64.FromData(v, a, b)
+
+In this case, x.Dims() is (a, b), and the values in x are the same as
+the values in v. Note that a*b must be equal to len(v).
+
+This function can also be invoked with data that is stored in a 2D
+slice ([][]float64). Just as the []float64 case, there are three
+possibilities:
+
+	x := mat64.FromData(s)
+
+In this case, x.Dims() is (len(s), len(s[0])), and the values in x
+are the same as the values in s. It is assumed that s is not jagged.
+
+Another form to call this function with a 2D slice of data is:
+
+	x := mat64.FromData(s, a)
+
+In this case, x.Dims() is (a, a), and the values in x are the same
+as the values in s. Note that the total number of elements in s
+must be exactly a*a.
+
+Finally, this function can be called as:
+
+	x := mat64.FromData(s, a, b)
+
+In this case, x.Dims() is (a, b), and the values in x are the same
+as the values in s. Note that the total number of elements in s
+must be exactly a*b. Also note that this is equivalent to:
+
+	x := mat64.FromData(s).Reshape(a, b)
+
+Choose the format that suits your needs, as there is no performace
+difference between the two forms.
 */
 func FromData(data interface{}, dims ...int) *Mat {
 	m := New()
@@ -158,7 +214,7 @@ func FromData(data interface{}, dims ...int) *Mat {
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
-		}
+		} // switch len(dims) for case []float64
 	case [][]float64:
 		switch len(dims) {
 		case 0:
@@ -212,7 +268,7 @@ func FromData(data interface{}, dims ...int) *Mat {
 			fmt.Println("Stack trace for this error:")
 			debug.PrintStack()
 			os.Exit(1)
-		}
+		} // switch len(dims) for case [][]float64
 	default:
 		s := "In mat64.%s, expected either []float64 or [][]float64 data."
 		s += "However, data of type %v was received."
@@ -220,7 +276,7 @@ func FromData(data interface{}, dims ...int) *Mat {
 		fmt.Println("Stack trace for this error:")
 		debug.PrintStack()
 		os.Exit(1)
-	}
+	} // switch data.(type)
 	return m
 }
 
@@ -394,15 +450,21 @@ func (m *Mat) Vals() []float64 {
 /*
 To2DSlice returns the values of a mat object as a 2D slice of float64s.
 */
-func (m *Mat) To2DSlice() [][]float64 {
-	s := make([][]float64, m.r)
-	for i := range s {
-		s[i] = make([]float64, m.c)
-		for j := range s[i] {
-			s[i][j] = m.vals[i*m.c+j]
+func (m *Mat) ToSlice() interface{} {
+	if m.c == 1 || m.r == 1 {
+		s := make([]float64, m.c*m.r, m.c*m.r*2)
+		copy(s, m.vals)
+		return s
+	} else {
+		s := make([][]float64, m.r)
+		for i := range s {
+			s[i] = make([]float64, m.c)
+			for j := range s[i] {
+				s[i][j] = m.vals[i*m.c+j]
+			}
 		}
+		return s
 	}
-	return s
 }
 
 /*

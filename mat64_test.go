@@ -219,14 +219,14 @@ func TestVals(t *testing.T) {
 	}
 }
 
-func TestTo2DSlice(t *testing.T) {
+func TestToSlice(t *testing.T) {
 	rows := 13
 	cols := 21
 	m := New(rows, cols)
 	for i := 0; i < m.r*m.c; i++ {
 		m.vals[i] = float64(i)
 	}
-	s := m.To2DSlice()
+	s := m.ToSlice()
 	if m.r != len(s) {
 		t.Errorf("mat.r: %d and len(s): %d must match", m.r, len(s))
 	}
@@ -433,8 +433,8 @@ func TestT(t *testing.T) {
 		m.vals[i] = float64(i)
 	}
 	n := m.T()
-	p := m.To2DSlice()
-	q := n.To2DSlice()
+	p := m.ToSlice()
+	q := n.ToSlice()
 	for i := 0; i < m.r; i++ {
 		for j := 0; j < m.c; j++ {
 			if p[i][j] != q[j][i] {
