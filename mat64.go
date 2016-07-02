@@ -127,10 +127,11 @@ as the values in v. x is essentially a row vector.
 
 Alternatively, this function can be invoked as:
 
-	x := mat64.FromData(v, len(v))
+	x := mat64.FromData(v, a
 
-In this case, x.Dims() is (len(v), 1), and the values in x are the same
-as the values in v. x is essentially a column vector.
+In this case, x.Dims() is (a, 1), and the values in x are the same
+as the values in v. x is essentially a column vector. Note that a
+must be equal to len(v).
 
 Finally for the case where the data is a []float64, the function can be
 invoked as:
@@ -170,9 +171,9 @@ must be exactly a*b. Also note that this is equivalent to:
 Choose the format that suits your needs, as there is no performace
 difference between the two forms.
 */
-func FromData(data interface{}, dims ...int) *Mat {
+func FromData(oneOrTwoDSlice interface{}, dims ...int) *Mat {
 	m := New()
-	switch v := data.(type) {
+	switch v := oneOrTwoDSlice.(type) {
 	case []float64:
 		switch len(dims) {
 		case 0:
@@ -695,8 +696,8 @@ func (m *Mat) Any(f func(*float64) bool) bool {
 	return false
 }
 
-func (m *Mat) Mul(val interface{}) *Mat {
-	switch v := val.(type) {
+func (m *Mat) Mul(float64OrMat64 interface{}) *Mat {
+	switch v := float64OrMat64.(type) {
 	case float64:
 		for i := range m.vals {
 			m.vals[i] *= v
@@ -737,8 +738,8 @@ func (m *Mat) Mul(val interface{}) *Mat {
 	return m
 }
 
-func (m *Mat) Add(val interface{}) *Mat {
-	switch v := val.(type) {
+func (m *Mat) Add(float64OrMat64 interface{}) *Mat {
+	switch v := float64OrMat64.(type) {
 	case float64:
 		for i := range m.vals {
 			m.vals[i] += v
@@ -779,8 +780,8 @@ func (m *Mat) Add(val interface{}) *Mat {
 	return m
 }
 
-func (m *Mat) Sub(val interface{}) *Mat {
-	switch v := val.(type) {
+func (m *Mat) Sub(float64OrMat64 interface{}) *Mat {
+	switch v := float64OrMat64.(type) {
 	case float64:
 		for i := range m.vals {
 			m.vals[i] -= v
@@ -821,8 +822,8 @@ func (m *Mat) Sub(val interface{}) *Mat {
 	return m
 }
 
-func (m *Mat) Div(val interface{}) *Mat {
-	switch v := val.(type) {
+func (m *Mat) Div(float64OrMat64 interface{}) *Mat {
+	switch v := float64OrMat64.(type) {
 	case float64:
 		for i := range m.vals {
 			m.vals[i] /= v
