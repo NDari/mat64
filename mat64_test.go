@@ -106,6 +106,7 @@ func TestFrom2DSlice(t *testing.T) {
 	if m.At(5, 2) == s[5][2] {
 		t.Error("Adjusting the slice changed the mat")
 	}
+	m = FromData("hi")
 }
 
 func TestFrom1DSlice(t *testing.T) {
