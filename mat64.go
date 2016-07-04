@@ -294,7 +294,6 @@ func FromData(oneOrTwoDSlice interface{}, dims ...int) *Mat {
 			q := string(debug.Stack())
 			w := strings.Split(q, "\n")
 			fmt.Println(strings.Join(w[5:], "\n"))
-			panic(s)
 			os.Exit(1)
 		} // switch len(dims) for case [][]float64
 	default:
