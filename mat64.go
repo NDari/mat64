@@ -952,7 +952,8 @@ func (m *Mat) Sum(args ...int) float64 {
 		}
 	case 2:
 		axis, slice := args[0], args[1]
-		if axis == 0 {
+		switch axis {
+		case 0:
 			if (slice >= m.r) || (slice < 0) {
 				s := "\nIn mat64.%s the row %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Sum()", slice, m.r)
@@ -966,7 +967,7 @@ func (m *Mat) Sum(args ...int) float64 {
 			for i := 0; i < m.c; i++ {
 				sum += m.vals[slice*m.c+i]
 			}
-		} else if axis == 1 {
+		case 1:
 			if (slice >= m.c) || (slice < 0) {
 				s := "\nIn mat64.%s the column %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Sum()", slice, m.c)
@@ -980,7 +981,7 @@ func (m *Mat) Sum(args ...int) float64 {
 			for i := 0; i < m.r; i++ {
 				sum += m.vals[i*m.c+slice]
 			}
-		} else {
+		default:
 			s := "\nIn mat64.%s, the first argument must be 0 or 1, however %d "
 			s += "was received.\n"
 			s = fmt.Sprintf(s, "Sum()", axis)
