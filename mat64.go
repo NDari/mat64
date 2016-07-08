@@ -1,5 +1,5 @@
 /*
-Package mat64 implements a "mat" object, which behaves like a 2-dimensional array
+Package mat64 implements a "mat" object, which behaves like a 2D array
 or list in other programming languages. Under the hood, the mat object is a
 flat slice, which provides for optimal performance in Go, while the methods
 and constructors provide for a higher level of performance and abstraction
@@ -189,7 +189,7 @@ func FromData(oneOrTwoDSlice interface{}, dims ...int) *Mat {
 		case 1:
 			if dims[0] != len(v) {
 				s := "\nIn mat64.%s, a 1D slice of data and a single int were passed.\n"
-				s += "However, the int (%d) is not equal to the length of the data (%d)."
+				s += "However the int (%d) is not equal to the length of the data (%d)."
 				s = fmt.Sprintf(s, "FromData()", dims[0], len(v))
 				color.Red(s)
 				color.Yellow("\nStack trace for this error:\n\n")
@@ -246,9 +246,10 @@ func FromData(oneOrTwoDSlice interface{}, dims ...int) *Mat {
 				s += "This would generate a %d by %d Mat. However, %d*%d does not\n"
 				s += "equal the number of elements in the passed 2D slice, %d.\n"
 				s += "Note that this function expects a non-jagged 2D slice, and\n"
-				s += "therefore assumed that every row in the passed 2D slice contains\n"
+				s += "is assumed that every row in the passed 2D slice contains\n"
 				s += "%d elements."
-				s = fmt.Sprintf(s, "FromData()", dims[0], dims[0], dims[0], dims[0], len(v)*len(v[0]), len(v[0]))
+				s = fmt.Sprintf(s, "FromData()", dims[0], dims[0], dims[0], dims[0],
+					len(v)*len(v[0]), len(v[0]))
 				color.Red(s)
 				color.Yellow("\nStack trace for this error:\n\n")
 				q := string(debug.Stack())
@@ -286,7 +287,7 @@ func FromData(oneOrTwoDSlice interface{}, dims ...int) *Mat {
 			m.r, m.c = len(v), len(v[0])
 		default:
 			s := "\nIn mat64.%s, a 2D slice of data and %d ints were passed.\n"
-			s += "However, this function expects 0 to 2 integers. Please review the docs for\n"
+			s += "However, this function expects 0 to 2 ints. Review the docs for\n"
 			s += "this function and adjust the number of integers passed accordingly."
 			s = fmt.Sprintf(s, "FromData()", len(dims))
 			color.Red(s)
@@ -626,7 +627,7 @@ the number of columns is equal to the number of columns of the original mat.
 */
 func (m *Mat) Row(x int) *Mat {
 	if (x >= m.r) || (x < -m.r) {
-		s := "\nIn mat64.%s the requested row %d is outside of the bounds [-%d, %d)\n"
+		s := "\nIn mat64.%s, row %d is outside of the bounds [-%d, %d)\n"
 		s = fmt.Sprintf(s, "Row()", x, m.r, m.r)
 		color.Red(s)
 		color.Yellow("\nStack trace for this error:\n\n")
@@ -992,7 +993,7 @@ func (m *Mat) Sum(args ...int) float64 {
 			os.Exit(1)
 		}
 	default:
-		s := "\nIn mat64.%s, 0 or 2 arguments must be passed, but %d was received.\n"
+		s := "\nIn mat64.%s, 0 or 2 arguments expected, but %d was received.\n"
 		s = fmt.Sprintf(s, "Sum()", len(args))
 		color.Red(s)
 		color.Yellow("\nStack trace for this error:\n\n")
@@ -1056,7 +1057,7 @@ func (m *Mat) Avg(args ...int) float64 {
 			os.Exit(1)
 		}
 	default:
-		s := "\nIn mat64.%s, 0 or 2 arguments must be passed, but %d was received.\n"
+		s := "\nIn mat64.%s, 0 or 2 arguments expected, but %d was received.\n"
 		s = fmt.Sprintf(s, "Avg()", len(args))
 		color.Red(s)
 		color.Yellow("\nStack trace for this error:\n\n")
@@ -1117,7 +1118,7 @@ func (m *Mat) Prd(args ...int) float64 {
 			os.Exit(1)
 		}
 	default:
-		s := "\nIn mat64.%s, 0 or 2 arguments must be passed, but %d was received.\n"
+		s := "\nIn mat64.%s, 0 or 2 arguments expected, but %d was received.\n"
 		s = fmt.Sprintf(s, "Prd()", len(args))
 		color.Red(s)
 		color.Yellow("\nStack trace for this error:\n\n")
