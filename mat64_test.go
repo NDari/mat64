@@ -31,7 +31,7 @@ func TestNewMat(t *testing.T) {
 		t.Errorf("expected m.c to be %d, but got %d", rows, m.c)
 	}
 	if m.vals == nil {
-		t.Errorf("New mat.vals not initilized")
+		t.Errorf("New mat.vals not initialized")
 	}
 	if len(m.vals) != rows*rows {
 		t.Errorf("expected len(m.vals) to be %d, but got %d", rows*rows, len(m.vals))
@@ -47,7 +47,7 @@ func TestNewMat(t *testing.T) {
 		t.Errorf("New mat.c is %d, expected %d", m.c, cols)
 	}
 	if m.vals == nil {
-		t.Errorf("New mat.vals not initilized")
+		t.Errorf("New mat.vals not initialized")
 	}
 	if len(m.vals) != rows*cols {
 		t.Errorf("len(mat.vals) is %d, expected %d", len(m.vals), rows*cols)
@@ -64,7 +64,7 @@ func TestNewMat(t *testing.T) {
 		t.Errorf("New mat.c is %d, expected %d", m.c, cols)
 	}
 	if m.vals == nil {
-		t.Errorf("New mat.vals not initilized")
+		t.Errorf("New mat.vals not initialized")
 	}
 	if len(m.vals) != rows*cols {
 		t.Errorf("len(mat.vals) is %d, expected %d", len(m.vals), rows*cols)
@@ -424,7 +424,7 @@ func BenchmarkRow(b *testing.B) {
 func TestEquals(t *testing.T) {
 	m := NewMat(13, 12)
 	if !m.Equals(m) {
-		t.Errorf("m is not equal iteself")
+		t.Errorf("m is not equal itself")
 	}
 }
 

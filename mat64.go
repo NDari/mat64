@@ -181,7 +181,7 @@ must be exactly a*b. Also note that this is equivalent to:
 
 	x := mat64.FromData(s).Reshape(a, b)
 
-Choose the format that suits your needs, as there is no performace
+Choose the format that suits your needs, as there is no performance
 difference between the two forms.
 */
 func FromData(oneOrTwoDSlice interface{}, dims ...int) *Mat {
@@ -674,7 +674,7 @@ func (m *Mat) Any(f func(*float64) bool) bool {
 }
 
 /*
-Mul carries the multiplication operation between each element of the reciever
+Mul carries the multiplication operation between each element of the receiver
 and an object passed to it. Based on the type of the passed object, the results
 of this method changes:
 
@@ -684,9 +684,9 @@ If the passed object is a float64, then each element is multiplied by it:
 	m.Mul(2.0)
 
 This will result in all values of m being 10.0.
-The passed Object can also be a Mat, in which case each element of the reciever
+The passed Object can also be a Mat, in which case each element of the receiver
 are multiplied by the corresponding element of the passed Mat. Note that the
-passed Mat must have the same shape as the reciever.
+passed Mat must have the same shape as the receiver.
 
 	m := NewMat(2, 3).SetAll(10.0)
 	n := m.Copy()
@@ -730,7 +730,7 @@ func (m *Mat) Mul(float64OrMat64 interface{}) *Mat {
 }
 
 /*
-Add carries the addition operation between each element of the reciever
+Add carries the addition operation between each element of the receiver
 and an object passed to it. Based on the type of the passed object, the results
 of this method changes:
 
@@ -741,8 +741,8 @@ If the passed object is a float64, then it is added to each element:
 
 This will result in all values of m being 7.0.
 The passed Object can also be a Mat, in which case each element of the element
-of the passed Mat is added to the corresponding element of the reciever. Note
-that the passed Mat must have the same shape as the reciever.
+of the passed Mat is added to the corresponding element of the receiver. Note
+that the passed Mat must have the same shape as the receiver.
 
 	m := NewMat(2, 3).SetAll(10.0)
 	n := m.Copy()
@@ -784,7 +784,7 @@ func (m *Mat) Add(float64OrMat64 interface{}) *Mat {
 }
 
 /*
-Sub carries the subtraction operation between each element of the reciever
+Sub carries the subtraction operation between each element of the receiver
 and an object passed to it. Based on the type of the passed object, the results
 of this method changes:
 
@@ -795,8 +795,8 @@ If the passed object is a float64, then it is subtracted from each element:
 
 This will result in all values of m being 3.0.
 The passed Object can also be a Mat, in which case each element of the passed
-Mat is subtracted from the corresponding element of the reciever. Note
-that the passed Mat must have the same shape as the reciever.
+Mat is subtracted from the corresponding element of the receiver. Note
+that the passed Mat must have the same shape as the receiver.
 
 	m := NewMat(2, 3).SetAll(10.0)
 	n := m.Copy()
@@ -838,11 +838,11 @@ func (m *Mat) Sub(float64OrMat64 interface{}) *Mat {
 }
 
 /*
-Div carries the division operation between each element of the reciever
+Div carries the division operation between each element of the receiver
 and an object passed to it. Based on the type of the passed object, the results
 of this method changes:
 
-If the passed object is a float64, then each element of the reciever is devided
+If the passed object is a float64, then each element of the receiver is devided
 by it:
 
 	m := NewMat(2, 3).SetAll(5.0)
@@ -852,8 +852,8 @@ This will result in all values of m being 2.5. Note that the passed float64
 cannot be 0.0.
 
 The passed Object can also be a Mat, in which case each element of the passed
-Mat is subtracted from the corresponding element of the reciever. Note
-that the passed Mat must have the same shape as the reciever, and it cannot
+Mat is subtracted from the corresponding element of the receiver. Note
+that the passed Mat must have the same shape as the receiver, and it cannot
 contains any elements which are 0.0.
 
 	m := NewMat(2, 3).SetAll(10.0)
@@ -1069,7 +1069,7 @@ func (m *Mat) Prd(args ...int) float64 {
 }
 
 /*
-Std takes the standard diviation of the elements of a Mat. It can be called in
+Std takes the standard deviation of the elements of a Mat. It can be called in
 one of two ways:
 
 	m.Std()
@@ -1078,8 +1078,8 @@ This will return the std. div. of all elements in m. This method can also be
 called by passing 2 integers: 0 or 1 for row or column, and another int
 specifying the row or column. For example:
 
-	m.Std(0, 2) // Returns the standard diviation of the 3rd row
-	m.Std(1, 0) // Returns the standard diviation of the first column.
+	m.Std(0, 2) // Returns the standard deviation of the 3rd row
+	m.Std(1, 0) // Returns the standard deviation of the first column.
 
 Note that second passed integer cannot be less than 0, or greater that the
 length of the matrix in that dimension.
@@ -1200,7 +1200,7 @@ AppendCol appends a column to the right side of a Mat.
 */
 func (m *Mat) AppendCol(v []float64) *Mat {
 	if m.r != len(v) {
-		s := "\nIn mat64.%s the number of rows of the reciever is %d, while\n"
+		s := "\nIn mat64.%s the number of rows of the receiver is %d, while\n"
 		s += "the number of rows of the vector is %d. They must be equal.\n"
 		s = fmt.Sprintf(s, "AppendCol()", m.r, len(v))
 		printErr(s)
