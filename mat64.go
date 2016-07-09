@@ -3,7 +3,10 @@ Package mat64 implements a "mat" object, which behaves like a 2D array
 or list in other programming languages. Under the hood, the mat object is a
 flat slice, which provides for optimal performance in Go, while the methods
 and constructors provide for a higher level of performance and abstraction
-when compared to the "2D" slices of go (slices of slices).
+when compared to the "2D" slices of go (slices of slices). Due to it's internal
+representation, row or column vectors can also be easily created by the Mat
+object, without a performance hit, by setting the number of rows or columns to
+one.
 
 All errors encountered in this package, such as attempting to access an
 element out of bounds are treated as critical error, and thus, the code
@@ -137,7 +140,7 @@ as the values in v. x is essentially a row vector.
 
 Alternatively, this function can be invoked as:
 
-	x := mat64.FromData(v, a
+	x := mat64.FromData(v, a)
 
 In this case, x.Dims() is (a, 1), and the values in x are the same
 as the values in v. x is essentially a column vector. Note that a
@@ -431,9 +434,9 @@ func (m *Mat) Reshape(rows, cols int) *Mat {
 }
 
 /*
-Dims returns the number of rows and columns of a mat object.
+Shape returns the number of rows and columns of a mat object.
 */
-func (m *Mat) Dims() (int, int) {
+func (m *Mat) Shape() (int, int) {
 	return m.r, m.c
 }
 
@@ -504,10 +507,16 @@ func (m *Mat) Get(r, c int) float64 {
 
 /*
 Foreach applies a given function to each element of a mat object. The given
-function must take a pointer to a float64, and return nothing.
+function must take a pointer to a float64, and return nothing. For eaxmple,
+lets say that we wish to take the error function of each element of a Mat. The
+following would do this:
+
+	m.Foreach(func(i *float64) {
+		*i = math.Erf(*i)
+	})
 */
 func (m *Mat) Foreach(f func(*float64)) *Mat {
-	for i := 0; i < m.r*m.c; i++ {
+	for i := range m.vals {
 		f(&m.vals[i])
 	}
 	return m
@@ -1240,14 +1249,13 @@ func (m *Mat) AppendRow(v []float64) *Mat {
 }
 
 /*
-Concat concatenates the inner slices of two `[][]float64` arguments..
+Concat concatenates the inner slices of two `[][]float64` arguments.
+For example:
 
-For example, if we have:
-
-	m := [[1.0, 2.0], [3.0, 4.0]]
-	n := [[5.0, 6.0], [7.0, 8.0]]
-	o := m.Concat(n).Row(0) // [1.0, 2.0, 5.0, 6.0]
-
+	m := NewMat(1, 2).SetAll(2.0)
+	n := NewMat(1, 3).SetAll(10.0)
+	m.Concat(n)
+	fmt.Println(m) // [[2.0 2.0 10.0 10.0, 10.0]]
 */
 func (m *Mat) Concat(n *Mat) *Mat {
 	if m.r != n.r {
@@ -1268,13 +1276,6 @@ func (m *Mat) Concat(n *Mat) *Mat {
 		for j := 0; j < m.c; j++ {
 			m.vals[i*m.c+j] = q[i][j]
 		}
-	}
-	return m
-}
-
-func (m *Mat) Tanh() *Mat {
-	for i := range m.vals {
-		m.vals[i] = math.Tanh(m.vals[i])
 	}
 	return m
 }

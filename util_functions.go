@@ -24,9 +24,4 @@ var (
 	Even = func(i *float64) bool {
 		return math.Mod(*i, 2.0) == 0.0
 	}
-
-	// Square takes a float64 pointer and squares its value.
-	Square = func(i *float64) {
-		*i *= *i
-	}
 )

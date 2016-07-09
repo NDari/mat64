@@ -193,9 +193,9 @@ func TestReshape(t *testing.T) {
 	}
 }
 
-func TestDims(t *testing.T) {
+func TestShape(t *testing.T) {
 	m := NewMat(11, 10)
-	r, c := m.Dims()
+	r, c := m.Shape()
 	if m.r != r {
 		t.Errorf("m.r expected 11, got %d", m.r)
 	}
@@ -291,6 +291,21 @@ func TestForeach(t *testing.T) {
 		if m.vals[i] != 1.0 {
 			t.Errorf("At %d, expected 1.0, got %f", i, m.vals[i])
 		}
+	}
+}
+
+func BenchmarkForeach(b *testing.B) {
+	m := NewMat(1721, 311)
+	for i := range m.vals {
+		m.vals[i] = float64(i)
+	}
+	f := func(i *float64) {
+		*i = 1.0
+		return
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = m.Foreach(f)
 	}
 }
 

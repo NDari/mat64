@@ -20,11 +20,4 @@ func TestFunctions(t *testing.T) {
 	if !m.All(Even) {
 		t.Errorf("Some are not even")
 	}
-	m.vals[0] = 0.0
-	m.Foreach(Square)
-	for i := range m.vals {
-		if m.vals[i] != float64(i*i*4) {
-			t.Errorf("At %d, expected %f, got %f", i, float64(i*i*4), m.vals[i])
-		}
-	}
 }
