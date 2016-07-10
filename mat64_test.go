@@ -443,6 +443,52 @@ func BenchmarkRow(b *testing.B) {
 	}
 }
 
+func TestMin(t *testing.T) {
+	m := New(3, 4)
+	m.Set(2, 1, -100.0)
+	_, minVal := m.Min()
+	if minVal != -100.0 {
+		t.Errorf("minVal: expected -100.0, got %f", minVal)
+	}
+	idx, minVal := m.Min(0, 2)
+	if minVal != -100.0 {
+		t.Errorf("maxVal: expected -100.0, got %f", minVal)
+	}
+	if idx != 1 {
+		t.Errorf("expected index 1, got %d", idx)
+	}
+	idx, minVal = m.Min(1, 1)
+	if minVal != -100.0 {
+		t.Errorf("minVal: expected -100.0, got %f", minVal)
+	}
+	if idx != 2 {
+		t.Errorf("expected index 2, got %d", idx)
+	}
+}
+
+func TestMax(t *testing.T) {
+	m := New(3, 4)
+	m.Set(2, 1, 100.0)
+	_, maxVal := m.Max()
+	if maxVal != 100.0 {
+		t.Errorf("maxVal: expected 100.0, got %f", maxVal)
+	}
+	idx, maxVal := m.Max(0, 2)
+	if maxVal != 100.0 {
+		t.Errorf("maxVal: expected 100.0, got %f", maxVal)
+	}
+	if idx != 1 {
+		t.Errorf("expected index 1, got %d", idx)
+	}
+	idx, maxVal = m.Max(1, 1)
+	if maxVal != 100.0 {
+		t.Errorf("maxVal: expected 100.0, got %f", maxVal)
+	}
+	if idx != 2 {
+		t.Errorf("expected index 2, got %d", idx)
+	}
+}
+
 func TestEquals(t *testing.T) {
 	m := New(13, 12)
 	if !m.Equals(m) {

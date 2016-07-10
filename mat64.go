@@ -56,7 +56,7 @@ func printErr(s string) {
 }
 
 /*
-NewMat is the primary constructor for the "Mat" object. New is a variadic function,
+New is the primary constructor for the "Mat" object. New is a variadic function,
 expecting 0 to 3 integers, with differing behavior as follows:
 
 	m := New()
@@ -537,7 +537,7 @@ Set sets the value of a mat at a given row and column to a given
 value.
 */
 func (m *Mat) Set(r, c int, val float64) *Mat {
-	m.vals[r*m.r+c] = val
+	m.vals[r*m.c+c] = val
 	return m
 }
 
@@ -653,6 +653,152 @@ func (m *Mat) Row(x int) *Mat {
 		}
 	}
 	return v
+}
+
+/*
+Min returns the index and the value of the smallest float64 in a Mat. This
+method can be called in one of two ways:
+
+	idx, val := m.Min()
+
+will return the index, and value of the smallest float64 in m. We can also
+specify the exact row and column for which we want the minimum index and
+values:
+
+	idx, val := m.Min(0, 3) // Get the min index and value of the 4th row
+	idx, val := m.Min(1, 2) // Get the min index and value of the 3rd column
+
+Note that negative index values are not supported at this time. Also note that
+in the case where multiple values are the maximum, the index of the first
+encountered value is returned.
+*/
+func (m *Mat) Min(args ...int) (index int, minVal float64) {
+	switch len(args) {
+	case 0:
+		index = 0
+		minVal = m.vals[0]
+		for i := 1; i < len(m.vals); i++ {
+			if m.vals[i] < minVal {
+				minVal = m.vals[i]
+				index = i
+			}
+		}
+	case 2:
+		axis, slice := args[0], args[1]
+		switch axis {
+		case 0:
+			if (slice >= m.r) || (slice < 0) {
+				s := "\nIn mat64.%s the row %d is outside of bounds [0, %d)\n"
+				s = fmt.Sprintf(s, "Min()", slice, m.r)
+				printErr(s)
+			}
+			index = 0
+			minVal = m.vals[slice*m.c]
+			for i := 1; i < m.c; i++ {
+				if m.vals[slice*m.c+i] < minVal {
+					minVal = m.vals[slice*m.c+i]
+					index = i
+				}
+			}
+		case 1:
+			if (slice >= m.c) || (slice < 0) {
+				s := "\nIn mat64.%s the column %d is outside of bounds [0, %d)\n"
+				s = fmt.Sprintf(s, "Min()", slice, m.c)
+				printErr(s)
+			}
+			index = 0
+			minVal = m.vals[slice]
+			for i := 1; i < m.r; i++ {
+				if m.vals[i*m.c+slice] < minVal {
+					minVal = m.vals[i*m.c+slice]
+					index = i
+				}
+			}
+		default:
+			s := "\nIn mat64.%s, the first argument must be 0 or 1, however %d "
+			s += "was received.\n"
+			s = fmt.Sprintf(s, "Min()", axis)
+			printErr(s)
+		} // Switch on axis
+	default:
+		s := "\nIn mat64.%s, 0 or 2 arguments expected, but %d was received.\n"
+		s = fmt.Sprintf(s, "Min()", len(args))
+		printErr(s)
+	} // switch on len(args)
+	return index, minVal
+}
+
+/*
+Max returns the index and the value of the biggest float64 in a Mat. This
+method can be called in one of two ways:
+
+	idx, val := m.Max()
+
+will return the index, and value of the biggest float64 in m. We can also
+specify the exact row and column for which we want the minimum index and
+values:
+
+	idx, val := m.Max(0, 3) // Get the max index and value of the 4th row
+	idx, val := m.Max(1, 2) // Get the max index and value of the 3rd column
+
+Note that negative index values are not supported at this time. Also note that
+in the case where multiple values are the maximum, the index of the first
+encountered value is returned.
+*/
+func (m *Mat) Max(args ...int) (index int, maxVal float64) {
+	switch len(args) {
+	case 0:
+		index = 0
+		maxVal = m.vals[0]
+		for i := 1; i < len(m.vals); i++ {
+			if m.vals[i] > maxVal {
+				maxVal = m.vals[i]
+				index = i
+			}
+		}
+	case 2:
+		axis, slice := args[0], args[1]
+		switch axis {
+		case 0:
+			if (slice >= m.r) || (slice < 0) {
+				s := "\nIn mat64.%s the row %d is outside of bounds [0, %d)\n"
+				s = fmt.Sprintf(s, "Max()", slice, m.r)
+				printErr(s)
+			}
+			index = 0
+			maxVal = m.vals[slice*m.c]
+			for i := 1; i < m.c; i++ {
+				if m.vals[slice*m.c+i] > maxVal {
+					maxVal = m.vals[slice*m.c+i]
+					index = i
+				}
+			}
+		case 1:
+			if (slice >= m.c) || (slice < 0) {
+				s := "\nIn mat64.%s the column %d is outside of bounds [0, %d)\n"
+				s = fmt.Sprintf(s, "Max()", slice, m.c)
+				printErr(s)
+			}
+			index = 0
+			maxVal = m.vals[slice]
+			for i := 1; i < m.r; i++ {
+				if m.vals[i*m.c+slice] > maxVal {
+					maxVal = m.vals[i*m.c+slice]
+					index = i
+				}
+			}
+		default:
+			s := "\nIn mat64.%s, the first argument must be 0 or 1, however %d "
+			s += "was received.\n"
+			s = fmt.Sprintf(s, "Max()", axis)
+			printErr(s)
+		} // Switch on axis
+	default:
+		s := "\nIn mat64.%s, 0 or 2 arguments expected, but %d was received.\n"
+		s = fmt.Sprintf(s, "Max()", len(args))
+		printErr(s)
+	} // switch on len(args)
+	return index, maxVal
 }
 
 /*
