@@ -329,6 +329,28 @@ func TestSet(t *testing.T) {
 	}
 }
 
+func TestSetCol(t *testing.T) {
+	m := New(3, 4)
+	m.SetCol(-1, 3.0)
+	n := m.Col(-1)
+	for i := range n.vals {
+		if n.vals[i] != 3.0 {
+			t.Errorf("at %d, expected 3.0, got %f", i, n.vals[i])
+		}
+	}
+}
+
+func TestSetRow(t *testing.T) {
+	m := New(3, 4)
+	m.SetRow(-1, 3.0)
+	n := m.Row(-1)
+	for i := range n.vals {
+		if n.vals[i] != 3.0 {
+			t.Errorf("at %d, expected 3.0, got %f", i, n.vals[i])
+		}
+	}
+}
+
 func TestRand(t *testing.T) {
 	row := 31
 	col := 42

@@ -542,13 +542,72 @@ func (m *Mat) Set(r, c int, val float64) *Mat {
 }
 
 /*
+SetCol Sets all elements in a given column to the passed value. Negative index
+values are allowed. For  example:
+
+	m.SetCol(-1, 2.0)
+
+sets all values of m's last column to 2.0.
+*/
+func (m *Mat) SetCol(col int, val float64) *Mat {
+	if (col >= m.c) || (col < -m.c) {
+		s := "\nIn mat64.%s the requested column %d is outside of bounds [%d, %d)\n"
+		s = fmt.Sprintf(s, "SetCol()", col, m.c, m.c)
+		printErr(s)
+	}
+	if col >= 0 {
+		for r := 0; r < m.r; r++ {
+			m.vals[r*m.c+col] = val
+		}
+	} else {
+		for r := 0; r < m.r; r++ {
+			m.vals[r*m.c+(m.c+col)] = val
+		}
+	}
+	return m
+}
+
+/*
+SetRow Sets all elements in a given row to the passed value. Negative index
+values are allowed. For  example:
+
+	m.SetRow(-1, 2.0)
+
+sets all values of m's last row to 2.0.
+*/
+func (m *Mat) SetRow(row int, val float64) *Mat {
+	if (row >= m.r) || (row < -m.r) {
+		s := "\nIn mat64.%s, row %d is outside of the bounds [-%d, %d)\n"
+		s = fmt.Sprintf(s, "Row()", row, m.r, m.r)
+		printErr(s)
+	}
+	if row >= 0 {
+		for r := 0; r < m.c; r++ {
+			m.vals[row*m.c+r] = val
+		}
+	} else {
+		for r := 0; r < m.c; r++ {
+			m.vals[(m.r+row)*m.c+r] = val
+		}
+	}
+	return m
+}
+
+/*
 Col returns a new mat object whose values are equal to a column of the original
 mat object. The number of Rows of the returned mat object is equal to the
-number of rows of the original mat, and the number of columns is equal to 1.
+number of rows of the original mat, and the number of columns is 1. This
+function essentially returns a column "vector".
+
+Negative indexing is allowed. For example:
+
+	m.Col(-1)
+
+returns m's last column.
 */
 func (m *Mat) Col(x int) *Mat {
 	if (x >= m.c) || (x < -m.c) {
-		s := "\nIn mat64.%s the requested column %d is outside of bounds [%d, %d)\n"
+		s := "\nIn mat64.%s the requested column %d is outside of bounds [-%d, %d)\n"
 		s = fmt.Sprintf(s, "Col()", x, m.c, m.c)
 		printErr(s)
 	}
@@ -568,7 +627,14 @@ func (m *Mat) Col(x int) *Mat {
 /*
 Row returns a new mat object whose values are equal to a row of the original
 mat object. The number of Rows of the returned mat object is equal to 1, and
-the number of columns is equal to the number of columns of the original mat.
+the number of columns is the number of columns of the original mat. This
+function essentially returns a row "vector".
+
+Negative index values are allowed. For example:
+
+	m.Row(-1)
+
+returns m's last row.
 */
 func (m *Mat) Row(x int) *Mat {
 	if (x >= m.r) || (x < -m.r) {
