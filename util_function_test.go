@@ -3,7 +3,7 @@ package mat64
 import "testing"
 
 func TestFunctions(t *testing.T) {
-	m := NewMat(10, 12)
+	m := New(10, 12)
 	for i := range m.vals {
 		m.vals[i] = float64(i * 2)
 	}

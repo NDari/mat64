@@ -6,10 +6,10 @@ import (
 	"testing"
 )
 
-func TestNewMat(t *testing.T) {
+func TestNew(t *testing.T) {
 	rows := 13
 	cols := 7
-	m := NewMat()
+	m := New()
 	if m.r != 0 {
 		t.Errorf("expected m.r to be 0, but got %d", m.r)
 	}
@@ -23,7 +23,7 @@ func TestNewMat(t *testing.T) {
 		t.Errorf("expected cap(m.vals) to be 0, but got %d", cap(m.vals))
 	}
 
-	m = NewMat(rows)
+	m = New(rows)
 	if m.r != rows {
 		t.Errorf("expected m.r to be %d, but got %d", rows, m.r)
 	}
@@ -39,7 +39,7 @@ func TestNewMat(t *testing.T) {
 	if cap(m.vals) != 2*rows*rows {
 		t.Errorf("expected cap(m.vals) to be %d, but got %d", 2*rows*rows, cap(m.vals))
 	}
-	m = NewMat(rows, cols)
+	m = New(rows, cols)
 	if m.r != rows {
 		t.Errorf("New mat.r is %d, expected %d", m.r, rows)
 	}
@@ -56,7 +56,7 @@ func TestNewMat(t *testing.T) {
 		t.Errorf("cap(mat.vals) is %d, expected %d", cap(m.vals), 2*rows*cols)
 	}
 
-	m = NewMat(rows, cols, rows*cols)
+	m = New(rows, cols, rows*cols)
 	if m.r != rows {
 		t.Errorf("New mat.r is %d, expected %d", m.r, rows)
 	}
@@ -194,7 +194,7 @@ func TestReshape(t *testing.T) {
 }
 
 func TestShape(t *testing.T) {
-	m := NewMat(11, 10)
+	m := New(11, 10)
 	r, c := m.Shape()
 	if m.r != r {
 		t.Errorf("m.r expected 11, got %d", m.r)
@@ -205,7 +205,7 @@ func TestShape(t *testing.T) {
 }
 
 func TestVals(t *testing.T) {
-	m := NewMat(22, 22)
+	m := New(22, 22)
 	m.SetAll(1.0)
 	s := m.Vals()
 	if len(s) != 22*22 {
@@ -221,7 +221,7 @@ func TestVals(t *testing.T) {
 func TestToSlice(t *testing.T) {
 	rows := 13
 	cols := 21
-	m := NewMat(rows, cols)
+	m := New(rows, cols)
 	for i := 0; i < m.r*m.c; i++ {
 		m.vals[i] = float64(i)
 	}
@@ -248,7 +248,7 @@ func TestToSlice(t *testing.T) {
 }
 
 func TestToCSV(t *testing.T) {
-	m := NewMat(23, 17)
+	m := New(23, 17)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -264,7 +264,7 @@ func TestToCSV(t *testing.T) {
 func TestGet(t *testing.T) {
 	rows := 17
 	cols := 13
-	m := NewMat(rows, cols)
+	m := New(rows, cols)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -286,7 +286,7 @@ func TestForeach(t *testing.T) {
 		*i = 1.0
 		return
 	}
-	m := NewMat(rows, cols).Foreach(f)
+	m := New(rows, cols).Foreach(f)
 	for i := 0; i < rows*cols; i++ {
 		if m.vals[i] != 1.0 {
 			t.Errorf("At %d, expected 1.0, got %f", i, m.vals[i])
@@ -295,7 +295,7 @@ func TestForeach(t *testing.T) {
 }
 
 func BenchmarkForeach(b *testing.B) {
-	m := NewMat(1721, 311)
+	m := New(1721, 311)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -313,7 +313,7 @@ func TestSetAll(t *testing.T) {
 	row := 3
 	col := 4
 	val := 11.0
-	m := NewMat(row, col).SetAll(val)
+	m := New(row, col).SetAll(val)
 	for i := 0; i < row*col; i++ {
 		if m.vals[i] != val {
 			t.Errorf("at index %d, not equal to %f", i, val)
@@ -322,7 +322,7 @@ func TestSetAll(t *testing.T) {
 }
 
 func TestSet(t *testing.T) {
-	m := NewMat(5)
+	m := New(5)
 	m.Set(2, 3, 10.0)
 	if m.vals[13] != 10.0 {
 		t.Errorf("expected 10.0, got %f", m.vals[13])
@@ -355,7 +355,7 @@ func TestRand(t *testing.T) {
 func TestCol(t *testing.T) {
 	row := 3
 	col := 4
-	m := NewMat(row, col)
+	m := New(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -380,7 +380,7 @@ func TestCol(t *testing.T) {
 }
 
 func BenchmarkCol(b *testing.B) {
-	m := NewMat(1721, 311)
+	m := New(1721, 311)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -393,7 +393,7 @@ func BenchmarkCol(b *testing.B) {
 func TestRow(t *testing.T) {
 	row := 3
 	col := 4
-	m := NewMat(row, col)
+	m := New(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -411,7 +411,7 @@ func TestRow(t *testing.T) {
 }
 
 func BenchmarkRow(b *testing.B) {
-	m := NewMat(1721, 311)
+	m := New(1721, 311)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -422,14 +422,14 @@ func BenchmarkRow(b *testing.B) {
 }
 
 func TestEquals(t *testing.T) {
-	m := NewMat(13, 12)
+	m := New(13, 12)
 	if !m.Equals(m) {
 		t.Errorf("m is not equal itself")
 	}
 }
 
 func TestCopy(t *testing.T) {
-	m := NewMat(13, 13)
+	m := New(13, 13)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -442,7 +442,7 @@ func TestCopy(t *testing.T) {
 }
 
 func TestT(t *testing.T) {
-	m := NewMat(12, 3)
+	m := New(12, 3)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -459,7 +459,7 @@ func TestT(t *testing.T) {
 }
 
 func BenchmarkT(b *testing.B) {
-	m := NewMat(1000, 251)
+	m := New(1000, 251)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -470,7 +470,7 @@ func BenchmarkT(b *testing.B) {
 }
 
 func TestAll(t *testing.T) {
-	m := NewMat(100, 21)
+	m := New(100, 21)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -496,7 +496,7 @@ func TestAll(t *testing.T) {
 }
 
 func TestAny(t *testing.T) {
-	m := NewMat(100, 21)
+	m := New(100, 21)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -522,7 +522,7 @@ func TestAny(t *testing.T) {
 }
 
 func TestMul(t *testing.T) {
-	m := NewMat(10, 11)
+	m := New(10, 11)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -536,11 +536,11 @@ func TestMul(t *testing.T) {
 }
 
 func BenchmarkMul(b *testing.B) {
-	n := NewMat(1000, 1000)
+	n := New(1000, 1000)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}
-	m := NewMat(1000, 1000)
+	m := New(1000, 1000)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -551,7 +551,7 @@ func BenchmarkMul(b *testing.B) {
 }
 
 func TestAdd(t *testing.T) {
-	m := NewMat(10, 11)
+	m := New(10, 11)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -565,7 +565,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestSub(t *testing.T) {
-	m := NewMat(10, 11)
+	m := New(10, 11)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -578,7 +578,7 @@ func TestSub(t *testing.T) {
 }
 
 func TestDiv(t *testing.T) {
-	m := NewMat(10, 11)
+	m := New(10, 11)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -594,7 +594,7 @@ func TestDiv(t *testing.T) {
 func TestSum(t *testing.T) {
 	row := 12
 	col := 17
-	m := NewMat(row, col).SetAll(1.0)
+	m := New(row, col).SetAll(1.0)
 	for i := 0; i < row; i++ {
 		q := m.Sum(0, i)
 		if q != float64(col) {
@@ -612,7 +612,7 @@ func TestSum(t *testing.T) {
 func TestAvg(t *testing.T) {
 	row := 12
 	col := 17
-	m := NewMat(row, col).SetAll(1.0)
+	m := New(row, col).SetAll(1.0)
 	for i := 0; i < row; i++ {
 		q := m.Avg(0, i)
 		if q != 1.0 {
@@ -630,7 +630,7 @@ func TestAvg(t *testing.T) {
 func TestPrd(t *testing.T) {
 	row := 12
 	col := 17
-	m := NewMat(row, col).SetAll(1.0)
+	m := New(row, col).SetAll(1.0)
 	for i := 0; i < row; i++ {
 		q := m.Prd(0, i)
 		if q != 1.0 {
@@ -648,7 +648,7 @@ func TestPrd(t *testing.T) {
 func TestStd(t *testing.T) {
 	row := 12
 	col := 17
-	m := NewMat(row, col).SetAll(1.0)
+	m := New(row, col).SetAll(1.0)
 	for i := 0; i < row; i++ {
 		q := m.Std(0, i)
 		if q != 0.0 {
@@ -668,11 +668,11 @@ func TestDot(t *testing.T) {
 		row = 10
 		col = 4
 	)
-	m := NewMat(row, col)
+	m := New(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
-	n := NewMat(col, row)
+	n := New(col, row)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}
@@ -683,7 +683,7 @@ func TestDot(t *testing.T) {
 	if o.c != row {
 		t.Errorf("o.c: expected %d, got %d", row, o.c)
 	}
-	p := NewMat(row, row)
+	p := New(row, row)
 	q := o.Dot(p)
 	for i := 0; i < row*row; i++ {
 		if q.vals[i] != 0.0 {
@@ -694,11 +694,11 @@ func TestDot(t *testing.T) {
 
 func BenchmarkDot(b *testing.B) {
 	row, col := 150, 130
-	m := NewMat(row, col)
+	m := New(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
-	n := NewMat(col, row)
+	n := New(col, row)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}
@@ -713,7 +713,7 @@ func TestAppendCol(t *testing.T) {
 		row = 10
 		col = 4
 	)
-	m := NewMat(row, col)
+	m := New(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -729,7 +729,7 @@ func TestAppendRow(t *testing.T) {
 		row = 3
 		col = 4
 	)
-	m := NewMat(row, col)
+	m := New(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -764,11 +764,11 @@ func TestConcat(t *testing.T) {
 		row = 10
 		col = 4
 	)
-	m := NewMat(row, col)
+	m := New(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
-	n := NewMat(row, row)
+	n := New(row, row)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}

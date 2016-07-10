@@ -59,18 +59,18 @@ func printErr(s string) {
 NewMat is the primary constructor for the "Mat" object. New is a variadic function,
 expecting 0 to 3 integers, with differing behavior as follows:
 
-	m := NewMat()
+	m := New()
 
 m is now an empty &Mat{}, where the number of rows,
 columns and the length and capacity of the underlying
 slice are all zero. This is mostly for internal use.
 
-	m := NewMat(x)
+	m := New(x)
 
 m is a x by x (square) matrix, with the underlying
 slice of length x, and capacity 2x.
 
-	m := NewMat(x, y)
+	m := New(x, y)
 
 m is an x by y matrix, with the underlying slice of
 length xy, and capacity of 2xy. This is a good case
@@ -79,17 +79,17 @@ future. There is a negligible hit to performance
 and a larger memory usage of your code. But in case
 expanding matrices, many re-allocations are avoided.
 
-	m := NewMat(x, y, z)
+	m := New(x, y, z)
 
 m is a x by u matrix, with the underlying slice of
 length xy, and capacity z. This is a good choice for
 when the size of the matrix is static, or when the
 application is memory constrained.
 
-For most cases, we recommend using the NewMat(x) or NewMat(x, y) options, and
-almost never the NewMat() option.
+For most cases, we recommend using the New(x) or New(x, y) options, and
+almost never the New() option.
 */
-func NewMat(dims ...int) *Mat {
+func New(dims ...int) *Mat {
 	m := &Mat{}
 	switch len(dims) {
 	case 0:
@@ -118,7 +118,7 @@ func NewMat(dims ...int) *Mat {
 		}
 	default:
 		s := "\nIn mat64.%s, expected 0 to 3 arguments, but received %d arguments."
-		s = fmt.Sprintf(s, "NewMat()", len(dims))
+		s = fmt.Sprintf(s, "New()", len(dims))
 		printErr(s)
 	}
 	return m
@@ -185,7 +185,7 @@ Choose the format that suits your needs, as there is no performance
 difference between the two forms.
 */
 func FromData(oneOrTwoDSlice interface{}, dims ...int) *Mat {
-	m := NewMat()
+	m := New()
 	switch v := oneOrTwoDSlice.(type) {
 	case []float64:
 		switch len(dims) {
@@ -320,7 +320,7 @@ func FromCSV(filename string) *Mat {
 		printErr(s)
 	}
 	line := 1
-	m := NewMat()
+	m := New()
 	// Start with one row, and set the number of entries per row
 	m.r = 1
 	m.c = len(str)
@@ -382,7 +382,7 @@ the range (x, y], (includes x, but excludes y). In this case, x must be strictly
 less than y.
 */
 func Rand(r, c int, args ...float64) *Mat {
-	m := NewMat(r, c)
+	m := New(r, c)
 	switch len(args) {
 	case 0:
 		for i := 0; i < m.r*m.c; i++ {
@@ -552,7 +552,7 @@ func (m *Mat) Col(x int) *Mat {
 		s = fmt.Sprintf(s, "Col()", x, m.c, m.c)
 		printErr(s)
 	}
-	v := NewMat(m.r, 1)
+	v := New(m.r, 1)
 	if x >= 0 {
 		for r := 0; r < m.r; r++ {
 			v.vals[r] = m.vals[r*m.c+x]
@@ -576,7 +576,7 @@ func (m *Mat) Row(x int) *Mat {
 		s = fmt.Sprintf(s, "Row()", x, m.r, m.r)
 		printErr(s)
 	}
-	v := NewMat(1, m.c)
+	v := New(1, m.c)
 	if x >= 0 {
 		for r := 0; r < m.c; r++ {
 			v.vals[r] = m.vals[x*m.c+r]
@@ -614,7 +614,7 @@ Copy returns a duplicate of a mat object. The returned copy is "deep", meaning
 that the object can be manipulated without effecting the original mat object.
 */
 func (m *Mat) Copy() *Mat {
-	n := NewMat(m.r, m.c)
+	n := New(m.r, m.c)
 	copy(n.vals, m.vals)
 	return n
 }
@@ -628,7 +628,7 @@ respectively. This method creates a new mat object, and the original is
 left intact.
 */
 func (m *Mat) T() *Mat {
-	n := NewMat(m.c, m.r)
+	n := New(m.c, m.r)
 	idx := 0
 	for i := 0; i < m.c; i++ {
 		for j := 0; j < m.r; j++ {
@@ -680,7 +680,7 @@ of this method changes:
 
 If the passed object is a float64, then each element is multiplied by it:
 
-	m := NewMat(2, 3).SetAll(5.0)
+	m := New(2, 3).SetAll(5.0)
 	m.Mul(2.0)
 
 This will result in all values of m being 10.0.
@@ -688,7 +688,7 @@ The passed Object can also be a Mat, in which case each element of the receiver
 are multiplied by the corresponding element of the passed Mat. Note that the
 passed Mat must have the same shape as the receiver.
 
-	m := NewMat(2, 3).SetAll(10.0)
+	m := New(2, 3).SetAll(10.0)
 	n := m.Copy()
 	m.Mul(n)
 
@@ -736,7 +736,7 @@ of this method changes:
 
 If the passed object is a float64, then it is added to each element:
 
-	m := NewMat(2, 3).SetAll(5.0)
+	m := New(2, 3).SetAll(5.0)
 	m.Add(2.0)
 
 This will result in all values of m being 7.0.
@@ -744,7 +744,7 @@ The passed Object can also be a Mat, in which case each element of the element
 of the passed Mat is added to the corresponding element of the receiver. Note
 that the passed Mat must have the same shape as the receiver.
 
-	m := NewMat(2, 3).SetAll(10.0)
+	m := New(2, 3).SetAll(10.0)
 	n := m.Copy()
 	m.Add(n)
 
@@ -790,7 +790,7 @@ of this method changes:
 
 If the passed object is a float64, then it is subtracted from each element:
 
-	m := NewMat(2, 3).SetAll(5.0)
+	m := New(2, 3).SetAll(5.0)
 	m.Sub(2.0)
 
 This will result in all values of m being 3.0.
@@ -798,7 +798,7 @@ The passed Object can also be a Mat, in which case each element of the passed
 Mat is subtracted from the corresponding element of the receiver. Note
 that the passed Mat must have the same shape as the receiver.
 
-	m := NewMat(2, 3).SetAll(10.0)
+	m := New(2, 3).SetAll(10.0)
 	n := m.Copy()
 	m.Sub(n)
 
@@ -845,7 +845,7 @@ of this method changes:
 If the passed object is a float64, then each element of the receiver is devided
 by it:
 
-	m := NewMat(2, 3).SetAll(5.0)
+	m := New(2, 3).SetAll(5.0)
 	m.Div(2.0)
 
 This will result in all values of m being 2.5. Note that the passed float64
@@ -856,7 +856,7 @@ Mat is subtracted from the corresponding element of the receiver. Note
 that the passed Mat must have the same shape as the receiver, and it cannot
 contains any elements which are 0.0.
 
-	m := NewMat(2, 3).SetAll(10.0)
+	m := New(2, 3).SetAll(10.0)
 	n := m.Copy()
 	m.Div(n)
 
@@ -1138,8 +1138,8 @@ func (m *Mat) Std(args ...int) float64 {
 Dot is the matrix multiplication of two mat objects. Consider the following two
 mats:
 
-	m := NewMat(5, 6)
-	n := NewMat(6, 10)
+	m := New(5, 6)
+	n := New(6, 10)
 
 then
 
@@ -1157,7 +1157,7 @@ func (m *Mat) Dot(n *Mat) *Mat {
 		s = fmt.Sprintf(s, "Dot()", m.c, n.r)
 		printErr(s)
 	}
-	o := NewMat(m.r, n.c)
+	o := New(m.r, n.c)
 	for i := 0; i < m.r; i++ {
 		for j := 0; j < n.c; j++ {
 			for k := 0; k < m.c; k++ {
@@ -1252,8 +1252,8 @@ func (m *Mat) AppendRow(v []float64) *Mat {
 Concat concatenates the inner slices of two `[][]float64` arguments.
 For example:
 
-	m := NewMat(1, 2).SetAll(2.0)
-	n := NewMat(1, 3).SetAll(10.0)
+	m := New(1, 2).SetAll(2.0)
+	n := New(1, 3).SetAll(10.0)
 	m.Concat(n)
 	fmt.Println(m) // [[2.0 2.0 10.0 10.0, 10.0]]
 */
