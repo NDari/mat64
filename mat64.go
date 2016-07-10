@@ -542,53 +542,117 @@ func (m *Mat) Set(r, c int, val float64) *Mat {
 }
 
 /*
-SetCol Sets all elements in a given column to the passed value. Negative index
-values are allowed. For  example:
+SetCol Sets all elements in a given column to the passed value(s). Negative
+index values are allowed. For  example:
 
 	m.SetCol(-1, 2.0)
 
-sets all values of m's last column to 2.0.
+sets all values of m's last column to 2.0. It is also possible to pass a slice
+of float64 to this function, all the elements of the chosen column will be
+set to the corresponding values in the slice. For example:
+
+	m := New(2, 2).SetCol(0, []float64{1.0, 2.0})
+
+sets to values in the first column of m to 1.0 and 2.0 respectively. Note that
+in this case, the length of the passed slice must match exactly the number of
+elements in m's column, i.e. the number of rows of m.
 */
-func (m *Mat) SetCol(col int, val float64) *Mat {
-	if (col >= m.c) || (col < -m.c) {
-		s := "\nIn mat64.%s the requested column %d is outside of bounds [%d, %d)\n"
-		s = fmt.Sprintf(s, "SetCol()", col, m.c, m.c)
+func (m *Mat) SetCol(col int, floatOrSlice interface{}) *Mat {
+	switch val := floatOrSlice.(type) {
+	case float64:
+		if (col >= m.c) || (col < -m.c) {
+			s := "\nIn mat64.%s the requested column %d is outside of bounds [%d, %d)\n"
+			s = fmt.Sprintf(s, "SetCol()", col, m.c, m.c)
+			printErr(s)
+		}
+		if col >= 0 {
+			for r := 0; r < m.r; r++ {
+				m.vals[r*m.c+col] = val
+			}
+		} else {
+			for r := 0; r < m.r; r++ {
+				m.vals[r*m.c+(m.c+col)] = val
+			}
+		}
+	case []float64:
+		if len(val) != m.r {
+			s := "\nIn mat64.%s the length of the passed slice is %d, which does\n"
+			s += "not match the number of rows in the receiver, %d."
+			s = fmt.Sprintf(s, "SetCol()", len(val), m.r)
+			printErr(s)
+		}
+		if col >= 0 {
+			for r := 0; r < m.r; r++ {
+				m.vals[r*m.c+col] = val[r]
+			}
+		} else {
+			for r := 0; r < m.r; r++ {
+				m.vals[r*m.c+(m.c+col)] = val[r]
+			}
+		}
+	default:
+		s := "\nIn mat64.%s, the passed value must be a float64 or []float64.\n"
+		s += "However, value of type  \"%v\" was received.\n"
+		s = fmt.Sprintf(s, "SetCol()", reflect.TypeOf(val))
 		printErr(s)
-	}
-	if col >= 0 {
-		for r := 0; r < m.r; r++ {
-			m.vals[r*m.c+col] = val
-		}
-	} else {
-		for r := 0; r < m.r; r++ {
-			m.vals[r*m.c+(m.c+col)] = val
-		}
 	}
 	return m
 }
 
 /*
-SetRow Sets all elements in a given row to the passed value. Negative index
-values are allowed. For  example:
+SetRow Sets all elements in a given column to the passed value(s). Negative
+index values are allowed. For  example:
 
 	m.SetRow(-1, 2.0)
 
-sets all values of m's last row to 2.0.
+sets all values of m's last row to 2.0. It is also possible to pass a slice
+of float64 to this function, all the elements of the chosen row will be
+set to the corresponding values in the slice. For example:
+
+	m := New(2, 2).SetRow(0, []float64{1.0, 2.0})
+
+sets to values in the first row of m to 1.0 and 2.0 respectively. Note that
+in this case, the length of the passed slice must match exactly the number of
+elements in m's row, i.e. the number of cols of m.
 */
-func (m *Mat) SetRow(row int, val float64) *Mat {
-	if (row >= m.r) || (row < -m.r) {
-		s := "\nIn mat64.%s, row %d is outside of the bounds [-%d, %d)\n"
-		s = fmt.Sprintf(s, "Row()", row, m.r, m.r)
+func (m *Mat) SetRow(row int, floatOrSlice interface{}) *Mat {
+	switch val := floatOrSlice.(type) {
+	case float64:
+		if (row >= m.r) || (row < -m.r) {
+			s := "\nIn mat64.%s, row %d is outside of the bounds [-%d, %d)\n"
+			s = fmt.Sprintf(s, "SetRow()", row, m.r, m.r)
+			printErr(s)
+		}
+		if row >= 0 {
+			for r := 0; r < m.c; r++ {
+				m.vals[row*m.c+r] = val
+			}
+		} else {
+			for r := 0; r < m.c; r++ {
+				m.vals[(m.r+row)*m.c+r] = val
+			}
+		}
+	case []float64:
+		if len(val) != m.c {
+			s := "\nIn mat64.%s the length of the passed slice is %d, which does\n"
+			s += "not match the number of columns in the receiver, %d."
+			s = fmt.Sprintf(s, "SetRow()", len(val), m.c)
+			printErr(s)
+		}
+		if row >= 0 {
+			for r := 0; r < m.c; r++ {
+				m.vals[row*m.c+r] = val[r]
+			}
+		} else {
+			for r := 0; r < m.c; r++ {
+				m.vals[(m.r+row)*m.c+r] = val[r]
+			}
+		}
+	default:
+		s := "\nIn mat64.%s, the passed value must be a float64 or []float64.\n"
+		s += "However, value of type  \"%v\" was received.\n"
+		s = fmt.Sprintf(s, "SetRow()", reflect.TypeOf(val))
 		printErr(s)
-	}
-	if row >= 0 {
-		for r := 0; r < m.c; r++ {
-			m.vals[row*m.c+r] = val
-		}
-	} else {
-		for r := 0; r < m.c; r++ {
-			m.vals[(m.r+row)*m.c+r] = val
-		}
 	}
 	return m
 }
