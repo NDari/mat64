@@ -1,0 +1,4 @@
+package: mat64
+import:
+- package: github.com/fatih/color
+  version: ~1.0.0

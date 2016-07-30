@@ -31,7 +31,7 @@ func TestNew(t *testing.T) {
 		t.Errorf("expected m.c to be %d, but got %d", rows, m.c)
 	}
 	if m.vals == nil {
-		t.Errorf("New mat.vals not initilized")
+		t.Errorf("New mat.vals not initialized")
 	}
 	if len(m.vals) != rows*rows {
 		t.Errorf("expected len(m.vals) to be %d, but got %d", rows*rows, len(m.vals))
@@ -47,7 +47,7 @@ func TestNew(t *testing.T) {
 		t.Errorf("New mat.c is %d, expected %d", m.c, cols)
 	}
 	if m.vals == nil {
-		t.Errorf("New mat.vals not initilized")
+		t.Errorf("New mat.vals not initialized")
 	}
 	if len(m.vals) != rows*cols {
 		t.Errorf("len(mat.vals) is %d, expected %d", len(m.vals), rows*cols)
@@ -64,7 +64,7 @@ func TestNew(t *testing.T) {
 		t.Errorf("New mat.c is %d, expected %d", m.c, cols)
 	}
 	if m.vals == nil {
-		t.Errorf("New mat.vals not initilized")
+		t.Errorf("New mat.vals not initialized")
 	}
 	if len(m.vals) != rows*cols {
 		t.Errorf("len(mat.vals) is %d, expected %d", len(m.vals), rows*cols)
@@ -86,7 +86,7 @@ func TestFrom2DSlice(t *testing.T) {
 			s[i][j] = float64(i + j)
 		}
 	}
-	m := From2DSlice(s)
+	m := FromData(s)
 	if len(m.vals) != rows*cols {
 		t.Errorf("expected length of mat to be %d, but got %d", rows*cols, len(m.vals))
 	}
@@ -103,7 +103,7 @@ func TestFrom2DSlice(t *testing.T) {
 		}
 	}
 	s[5][2] = 1021.0
-	if m.At(5, 2) == s[5][2] {
+	if m.Get(5, 2) == s[5][2] {
 		t.Error("Adjusting the slice changed the mat")
 	}
 }
@@ -115,7 +115,7 @@ func TestFrom1DSlice(t *testing.T) {
 	for i := 0; i < len(s); i++ {
 		s[i] = float64(i * i)
 	}
-	m := FromData(rows, cols, s)
+	m := FromData(s, cols)
 	if len(m.vals) != rows*cols {
 		t.Errorf("expected length of mat to be %d, but got %d", rows*cols, len(m.vals))
 	}
@@ -179,7 +179,7 @@ func TestReshape(t *testing.T) {
 	for i := 0; i < len(s); i++ {
 		s[i] = float64(i * 3)
 	}
-	m := FromData(1, 120, s).Reshape(10, 12)
+	m := FromData(s).Reshape(10, 12)
 	if m.r != 10 {
 		t.Errorf("expected rows = 10, got %d", m.r)
 	}
@@ -193,9 +193,9 @@ func TestReshape(t *testing.T) {
 	}
 }
 
-func TestDims(t *testing.T) {
+func TestShape(t *testing.T) {
 	m := New(11, 10)
-	r, c := m.Dims()
+	r, c := m.Shape()
 	if m.r != r {
 		t.Errorf("m.r expected 11, got %d", m.r)
 	}
@@ -218,14 +218,14 @@ func TestVals(t *testing.T) {
 	}
 }
 
-func TestTo2DSlice(t *testing.T) {
+func TestToSlice(t *testing.T) {
 	rows := 13
 	cols := 21
 	m := New(rows, cols)
 	for i := 0; i < m.r*m.c; i++ {
 		m.vals[i] = float64(i)
 	}
-	s := m.To2DSlice()
+	s := m.ToSlice()
 	if m.r != len(s) {
 		t.Errorf("mat.r: %d and len(s): %d must match", m.r, len(s))
 	}
@@ -242,7 +242,7 @@ func TestTo2DSlice(t *testing.T) {
 		}
 	}
 	s[11][2] = 11113123.0
-	if m.At(12, 2) == s[11][2] {
+	if m.Get(12, 2) == s[11][2] {
 		t.Error("Adjusting the slice changed the mat")
 	}
 }
@@ -261,7 +261,7 @@ func TestToCSV(t *testing.T) {
 	os.Remove(filename)
 }
 
-func TestAt(t *testing.T) {
+func TestGet(t *testing.T) {
 	rows := 17
 	cols := 13
 	m := New(rows, cols)
@@ -271,8 +271,8 @@ func TestAt(t *testing.T) {
 	idx := 0
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-			if m.At(i, j) != m.vals[idx] {
-				t.Errorf("at index %d expected %f, got %f", i, m.vals[idx], m.At(i, j))
+			if m.Get(i, j) != m.vals[idx] {
+				t.Errorf("at index %d expected %f, got %f", i, m.vals[idx], m.Get(i, j))
 			}
 			idx++
 		}
@@ -294,6 +294,21 @@ func TestForeach(t *testing.T) {
 	}
 }
 
+func BenchmarkForeach(b *testing.B) {
+	m := New(1721, 311)
+	for i := range m.vals {
+		m.vals[i] = float64(i)
+	}
+	f := func(i *float64) {
+		*i = 1.0
+		return
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = m.Foreach(f)
+	}
+}
+
 func TestSetAll(t *testing.T) {
 	row := 3
 	col := 4
@@ -311,6 +326,42 @@ func TestSet(t *testing.T) {
 	m.Set(2, 3, 10.0)
 	if m.vals[13] != 10.0 {
 		t.Errorf("expected 10.0, got %f", m.vals[13])
+	}
+}
+
+func TestSetCol(t *testing.T) {
+	m := New(3, 4)
+	m.SetCol(-1, 3.0)
+	n := m.Col(-1)
+	for i := range n.vals {
+		if n.vals[i] != 3.0 {
+			t.Errorf("at %d, expected 3.0, got %f", i, n.vals[i])
+		}
+	}
+	m.SetCol(-1, []float64{0.0, 0.0, 0.0})
+	n = m.Col(-1)
+	for i := range n.vals {
+		if n.vals[i] != 0.0 {
+			t.Errorf("at %d, expected 0.0, got %f", i, n.vals[i])
+		}
+	}
+}
+
+func TestSetRow(t *testing.T) {
+	m := New(3, 4)
+	m.SetRow(-1, 3.0)
+	n := m.Row(-1)
+	for i := range n.vals {
+		if n.vals[i] != 3.0 {
+			t.Errorf("at %d, expected 3.0, got %f", i, n.vals[i])
+		}
+	}
+	m.SetRow(-1, []float64{0.0, 0.0, 0.0, 0.0})
+	n = m.Row(-1)
+	for i := range n.vals {
+		if n.vals[i] != 0.0 {
+			t.Errorf("at %d, expected 0.0, got %f", i, n.vals[i])
+		}
 	}
 }
 
@@ -406,10 +457,56 @@ func BenchmarkRow(b *testing.B) {
 	}
 }
 
+func TestMin(t *testing.T) {
+	m := New(3, 4)
+	m.Set(2, 1, -100.0)
+	_, minVal := m.Min()
+	if minVal != -100.0 {
+		t.Errorf("minVal: expected -100.0, got %f", minVal)
+	}
+	idx, minVal := m.Min(0, 2)
+	if minVal != -100.0 {
+		t.Errorf("minVal: expected -100.0, got %f", minVal)
+	}
+	if idx != 1 {
+		t.Errorf("expected index 1, got %d", idx)
+	}
+	idx, minVal = m.Min(1, 1)
+	if minVal != -100.0 {
+		t.Errorf("minVal: expected -100.0, got %f", minVal)
+	}
+	if idx != 2 {
+		t.Errorf("expected index 2, got %d", idx)
+	}
+}
+
+func TestMax(t *testing.T) {
+	m := New(3, 4)
+	m.Set(2, 1, 100.0)
+	_, maxVal := m.Max()
+	if maxVal != 100.0 {
+		t.Errorf("maxVal: expected 100.0, got %f", maxVal)
+	}
+	idx, maxVal := m.Max(0, 2)
+	if maxVal != 100.0 {
+		t.Errorf("maxVal: expected 100.0, got %f", maxVal)
+	}
+	if idx != 1 {
+		t.Errorf("expected index 1, got %d", idx)
+	}
+	idx, maxVal = m.Max(1, 1)
+	if maxVal != 100.0 {
+		t.Errorf("maxVal: expected 100.0, got %f", maxVal)
+	}
+	if idx != 2 {
+		t.Errorf("expected index 2, got %d", idx)
+	}
+}
+
 func TestEquals(t *testing.T) {
 	m := New(13, 12)
 	if !m.Equals(m) {
-		t.Errorf("m is not equal iteself")
+		t.Errorf("m is not equal itself")
 	}
 }
 
@@ -432,8 +529,8 @@ func TestT(t *testing.T) {
 		m.vals[i] = float64(i)
 	}
 	n := m.T()
-	p := m.To2DSlice()
-	q := n.To2DSlice()
+	p := m.ToSlice()
+	q := n.ToSlice()
 	for i := 0; i < m.r; i++ {
 		for j := 0; j < m.c; j++ {
 			if p[i][j] != q[j][i] {
@@ -711,7 +808,7 @@ func TestAppendCol(t *testing.T) {
 
 func TestAppendRow(t *testing.T) {
 	var (
-		row = 10
+		row = 3
 		col = 4
 	)
 	m := New(row, col)
@@ -719,9 +816,28 @@ func TestAppendRow(t *testing.T) {
 		m.vals[i] = float64(i)
 	}
 	v := make([]float64, col)
+	for i := range v {
+		v[i] = float64(i * i * i)
+	}
 	m.AppendRow(v)
 	if m.r != row+1 {
 		t.Errorf("Expected number of rows to be %d, but got %d", row+1, m.r)
+	}
+	m.AppendRow(v)
+	if m.r != row+2 {
+		t.Errorf("Expected number of rows to be %d, but got %d", row+2, m.r)
+	}
+	m.AppendRow(v)
+	if m.r != row+3 {
+		t.Errorf("Expected number of rows to be %d, but got %d", row+3, m.r)
+	}
+	m.AppendRow(v)
+	if m.r != row+4 {
+		t.Errorf("Expected number of rows to be %d, but got %d", row+4, m.r)
+	}
+	m.AppendRow(v)
+	if m.r != row+5 {
+		t.Errorf("Expected number of rows to be %d, but got %d", row+5, m.r)
 	}
 }
 
