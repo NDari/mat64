@@ -506,6 +506,25 @@ func (m *Mat) Get(r, c int) float64 {
 }
 
 /*
+Set sets the value of a mat at a given row and column to a given
+value.
+*/
+func (m *Mat) Set(r, c int, val float64) *Mat {
+	m.vals[r*m.r+c] = val
+	return m
+}
+
+/*
+SetAll sets all values of a mat to the passed float64 value.
+*/
+func (m *Mat) SetAll(val float64) *Mat {
+	for i := range m.vals {
+		m.vals[i] = val
+	}
+	return m
+}
+
+/*
 Foreach applies a given function to each element of a mat object. The given
 function must take a pointer to a float64, and return nothing. For eaxmple,
 lets say that we wish to take the error function of each element of a Mat. The
@@ -523,28 +542,15 @@ func (m *Mat) Foreach(f func(*float64)) *Mat {
 }
 
 /*
-SetAll sets all values of a mat to the passed float64 value.
-*/
-func (m *Mat) SetAll(val float64) *Mat {
-	for i := range m.vals {
-		m.vals[i] = val
-	}
-	return m
-}
-
-/*
-Set sets the value of a mat at a given row and column to a given
-value.
-*/
-func (m *Mat) Set(r, c int, val float64) *Mat {
-	m.vals[r*m.r+c] = val
-	return m
-}
-
-/*
 Col returns a new mat object whose values are equal to a column of the original
 mat object. The number of Rows of the returned mat object is equal to the
 number of rows of the original mat, and the number of columns is equal to 1.
+
+This function supports negative indexing. For example,
+
+	v := m.Col(-1)
+
+returns the last column of m.
 */
 func (m *Mat) Col(x int) *Mat {
 	if (x >= m.c) || (x < -m.c) {
@@ -569,6 +575,12 @@ func (m *Mat) Col(x int) *Mat {
 Row returns a new mat object whose values are equal to a row of the original
 mat object. The number of Rows of the returned mat object is equal to 1, and
 the number of columns is equal to the number of columns of the original mat.
+
+This function supports negative indexing. For example,
+
+	v := m.Row(-1)
+
+returns the last row of m.
 */
 func (m *Mat) Row(x int) *Mat {
 	if (x >= m.r) || (x < -m.r) {
@@ -1249,13 +1261,16 @@ func (m *Mat) AppendRow(v []float64) *Mat {
 }
 
 /*
-Concat concatenates the inner slices of two `[][]float64` arguments.
+Concat merges a passed mat to the right side of the receiver. The passed mat
+must therefore have the same number of rows as the receiver.
 For example:
 
-	m := New(1, 2).SetAll(2.0)
-	n := New(1, 3).SetAll(10.0)
+	m := New(1, 2).SetAll(2.0) // [[2.0, 2.0]]
+	n := New(1, 3).SetAll(3.0) // [[3.0, 3.0, 3.0]]
 	m.Concat(n)
-	fmt.Println(m) // [[2.0 2.0 10.0 10.0, 10.0]]
+	fmt.Println(m) // [[2.0, 2.0, 3.0, 3.0, 3.0]]
+
+Note that in the current implementation this is a somewhat expensive function.
 */
 func (m *Mat) Concat(n *Mat) *Mat {
 	if m.r != n.r {
@@ -1277,5 +1292,28 @@ func (m *Mat) Concat(n *Mat) *Mat {
 			m.vals[i*m.c+j] = q[i][j]
 		}
 	}
+	return m
+}
+
+/*
+Append merges a passed mat to the botton of the receiver. The passed mat
+must therefore have the same number of columns as the receiver.
+For example:
+
+	m := New(1, 2).SetAll(2.0) // [[2.0, 2.0]]
+	n := New(2, 2).SetAll(3.0) // [[3.0, 3.0], [3.0, 3.0]]
+	m.Append(n)
+	fmt.Println(m) // [[2.0, 2.0], [3.0, 3.0], [3.0, 3.0]]
+
+Note that in the current implementation this is a somewhat expensive function.
+*/
+func (m *Mat) Append(n *Mat) *Mat {
+	if m.c != n.c {
+		s := "\nIn mat64.%s the number of cols of the receiver is %d, while\n"
+		s += "the number of cols of the passed Mat is %d. They must be equal.\n"
+		s = fmt.Sprintf(s, "Append()", m.c, n.c)
+		printErr(s)
+	}
+	m.vals = append(m.vals, n.vals...)
 	return m
 }
