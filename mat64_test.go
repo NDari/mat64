@@ -329,6 +329,42 @@ func TestSet(t *testing.T) {
 	}
 }
 
+func TestSetCol(t *testing.T) {
+	m := New(3, 4)
+	m.SetCol(-1, 3.0)
+	n := m.Col(-1)
+	for i := range n.vals {
+		if n.vals[i] != 3.0 {
+			t.Errorf("at %d, expected 3.0, got %f", i, n.vals[i])
+		}
+	}
+	m.SetCol(-1, []float64{0.0, 0.0, 0.0})
+	n = m.Col(-1)
+	for i := range n.vals {
+		if n.vals[i] != 0.0 {
+			t.Errorf("at %d, expected 0.0, got %f", i, n.vals[i])
+		}
+	}
+}
+
+func TestSetRow(t *testing.T) {
+	m := New(3, 4)
+	m.SetRow(-1, 3.0)
+	n := m.Row(-1)
+	for i := range n.vals {
+		if n.vals[i] != 3.0 {
+			t.Errorf("at %d, expected 3.0, got %f", i, n.vals[i])
+		}
+	}
+	m.SetRow(-1, []float64{0.0, 0.0, 0.0, 0.0})
+	n = m.Row(-1)
+	for i := range n.vals {
+		if n.vals[i] != 0.0 {
+			t.Errorf("at %d, expected 0.0, got %f", i, n.vals[i])
+		}
+	}
+}
+
 func TestRand(t *testing.T) {
 	row := 31
 	col := 42
@@ -418,6 +454,52 @@ func BenchmarkRow(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = m.Row(211)
+	}
+}
+
+func TestMin(t *testing.T) {
+	m := New(3, 4)
+	m.Set(2, 1, -100.0)
+	_, minVal := m.Min()
+	if minVal != -100.0 {
+		t.Errorf("minVal: expected -100.0, got %f", minVal)
+	}
+	idx, minVal := m.Min(0, 2)
+	if minVal != -100.0 {
+		t.Errorf("minVal: expected -100.0, got %f", minVal)
+	}
+	if idx != 1 {
+		t.Errorf("expected index 1, got %d", idx)
+	}
+	idx, minVal = m.Min(1, 1)
+	if minVal != -100.0 {
+		t.Errorf("minVal: expected -100.0, got %f", minVal)
+	}
+	if idx != 2 {
+		t.Errorf("expected index 2, got %d", idx)
+	}
+}
+
+func TestMax(t *testing.T) {
+	m := New(3, 4)
+	m.Set(2, 1, 100.0)
+	_, maxVal := m.Max()
+	if maxVal != 100.0 {
+		t.Errorf("maxVal: expected 100.0, got %f", maxVal)
+	}
+	idx, maxVal := m.Max(0, 2)
+	if maxVal != 100.0 {
+		t.Errorf("maxVal: expected 100.0, got %f", maxVal)
+	}
+	if idx != 1 {
+		t.Errorf("expected index 1, got %d", idx)
+	}
+	idx, maxVal = m.Max(1, 1)
+	if maxVal != 100.0 {
+		t.Errorf("maxVal: expected 100.0, got %f", maxVal)
+	}
+	if idx != 2 {
+		t.Errorf("expected index 2, got %d", idx)
 	}
 }
 
