@@ -583,19 +583,13 @@ func TestAny(t *testing.T) {
 		m.vals[i] = float64(i)
 	}
 	neg := func(i *float64) bool {
-		if *i < 0.0 {
-			return true
-		}
-		return false
+		return *i < 0.0
 	}
 	if m.Any(neg) {
 		t.Errorf("Any(neg) is true for Inc()")
 	}
 	one := func(i *float64) bool {
-		if *i == 1.0 {
-			return true
-		}
-		return false
+		return *i == 1.0
 	}
 	m.SetAll(1.0)
 	if !m.Any(one) {
