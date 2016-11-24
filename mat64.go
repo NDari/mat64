@@ -55,6 +55,15 @@ func printErr(s string) {
 	os.Exit(1)
 }
 
+func printHelperErr(s string) {
+	color.Red(s)
+	color.Yellow("\nStack trace for this error:\n\n")
+	q := string(debug.Stack())
+	w := strings.Split(q, "\n")
+	fmt.Println(strings.Join(w[9:], "\n"))
+	os.Exit(1)
+}
+
 /*
 New is the primary constructor for the "Mat" object. New is a variadic function,
 expecting 0 to 3 integers, with differing behavior as follows:
@@ -188,98 +197,110 @@ func FromData(oneOrTwoDSlice interface{}, dims ...int) *Mat {
 	m := New()
 	switch v := oneOrTwoDSlice.(type) {
 	case []float64:
-		switch len(dims) {
-		case 0:
-			m.vals = make([]float64, len(v), len(v)*2)
-			copy(m.vals, v)
-			m.r, m.c = 1, len(v)
-		case 1:
-			if dims[0] != len(v) {
-				s := "\nIn mat64.%s, a 1D slice of data and a single int were passed.\n"
-				s += "However the int (%d) is not equal to the length of the data (%d)."
-				s = fmt.Sprintf(s, "FromData()", dims[0], len(v))
-				printErr(s)
-			}
-			m.vals = make([]float64, dims[0], dims[0]*2)
-			copy(m.vals, v)
-			m.r, m.c = dims[0], 1
-		case 2:
-			if dims[0]*dims[1] != len(v) {
-				s := "\nIn mat64.%s, a 1D slice of data and two ints were passed.\n"
-				s += "However, the product of the two ints (%d, %d) does not equal\n"
-				s += "the number of elements in the data slice, %d. They must be equal."
-				s = fmt.Sprintf(s, "FromData()", dims[0]*dims[1], len(v))
-				printErr(s)
-			}
-			m.vals = make([]float64, dims[0]*dims[1], dims[0]*dims[1]*2)
-			copy(m.vals, v)
-			m.r, m.c = dims[0], dims[1]
-		default:
-			s := "\nIn mat64.%s, a 1D slice of data and %d ints were passed.\n"
-			s += "This function expects 0 to 2 integers. Please review the docs for\n"
-			s += "this function and adjust the number of integers based on the\n"
-			s += "desired output."
-			s = fmt.Sprintf(s, "FromData()", len(dims))
-			printErr(s)
-		} // switch len(dims) for case []float64
+		m = fromOneDSliceHelper(v, dims)
 	case [][]float64:
-		switch len(dims) {
-		case 0:
-			m.vals = make([]float64, len(v)*len(v[0]), len(v)*len(v[0])*2)
-			for i := range v {
-				for j := range v[i] {
-					m.vals[i*len(v[0])+j] = v[i][j]
-				}
-			}
-			m.r, m.c = len(v), len(v[0])
-		case 1:
-			if dims[0]*2 != len(v)*len(v[0]) {
-				s := "\nIn mat64.%s, a 2D slice of data and 1 int were passed.\n"
-				s += "This would generate a %d by %d Mat. However, %d*%d does not\n"
-				s += "equal the number of elements in the passed 2D slice, %d.\n"
-				s += "Note that this function expects a non-jagged 2D slice, and\n"
-				s += "is assumed that every row in the passed 2D slice contains\n"
-				s += "%d elements."
-				s = fmt.Sprintf(s, "FromData()", dims[0], dims[0], dims[0], dims[0],
-					len(v)*len(v[0]), len(v[0]))
-				printErr(s)
-			}
-			m.vals = make([]float64, dims[0]*dims[0], dims[0]*dims[0]*2)
-			for i := range v {
-				for j := range v[i] {
-					m.vals[i*len(v[0])+j] = v[i][j]
-				}
-			}
-			m.r, m.c = len(v), len(v[0])
-		case 2:
-			if dims[0] != len(v) || dims[1] != len(v[0]) {
-				s := "\nIn mat64.%s, a 2D slice of data and 2 ints were passed.\n"
-				s += "However, the requested number of rows and columns (%d and %d)\n"
-				s += "of the resultant Mat does not match the length and width of\n"
-				s += "the data slice (%d and %d)."
-				s = fmt.Sprintf(s, "FromData()", dims[0], dims[1], len(v), len(v[0]))
-				printErr(s)
-			}
-			m.vals = make([]float64, dims[0]*dims[1], dims[0]*dims[1]*2)
-			for i := range v {
-				for j := range v[i] {
-					m.vals[i*len(v[0])+j] = v[i][j]
-				}
-			}
-			m.r, m.c = len(v), len(v[0])
-		default:
-			s := "\nIn mat64.%s, a 2D slice of data and %d ints were passed.\n"
-			s += "However, this function expects 0 to 2 ints. Review the docs for\n"
-			s += "this function and adjust the number of integers passed accordingly."
-			s = fmt.Sprintf(s, "FromData()", len(dims))
-			printErr(s)
-		} // switch len(dims) for case [][]float64
+		m = fromTwoDSliceHelper(v, dims)
 	default:
 		s := "\nIn mat64.%s, expected input data of type []float64 or\n"
 		s += "[][]float64, However, data of type \"%v\" was received."
 		s = fmt.Sprintf(s, "FromData()", reflect.TypeOf(v))
 		printErr(s)
 	} // switch data.(type)
+	return m
+}
+
+func fromOneDSliceHelper(v []float64, dims []int) *Mat {
+	m := New()
+	switch len(dims) {
+	case 0:
+		m.vals = make([]float64, len(v), len(v)*2)
+		copy(m.vals, v)
+		m.r, m.c = 1, len(v)
+	case 1:
+		if dims[0] != len(v) {
+			s := "\nIn mat64.%s, a 1D slice of data and a single int were passed.\n"
+			s += "However the int (%d) is not equal to the length of the data (%d)."
+			s = fmt.Sprintf(s, "FromData()", dims[0], len(v))
+			printHelperErr(s)
+		}
+		m.vals = make([]float64, dims[0], dims[0]*2)
+		copy(m.vals, v)
+		m.r, m.c = dims[0], 1
+	case 2:
+		if dims[0]*dims[1] != len(v) {
+			s := "\nIn mat64.%s, a 1D slice of data and two ints were passed.\n"
+			s += "However, the product of the two ints (%d, %d) does not equal\n"
+			s += "the number of elements in the data slice, %d. They must be equal."
+			s = fmt.Sprintf(s, "FromData()", dims[0]*dims[1], len(v))
+			printHelperErr(s)
+		}
+		m.vals = make([]float64, dims[0]*dims[1], dims[0]*dims[1]*2)
+		copy(m.vals, v)
+		m.r, m.c = dims[0], dims[1]
+	default:
+		s := "\nIn mat64.%s, a 1D slice of data and %d ints were passed.\n"
+		s += "This function expects 0 to 2 integers. Please review the docs for\n"
+		s += "this function and adjust the number of integers based on the\n"
+		s += "desired output."
+		s = fmt.Sprintf(s, "FromData()", len(dims))
+		printHelperErr(s)
+	}
+	return m
+}
+
+func fromTwoDSliceHelper(v [][]float64, dims []int) *Mat {
+	m := New()
+	switch len(dims) {
+	case 0:
+		m.vals = make([]float64, len(v)*len(v[0]), len(v)*len(v[0])*2)
+		for i := range v {
+			for j := range v[i] {
+				m.vals[i*len(v[0])+j] = v[i][j]
+			}
+		}
+		m.r, m.c = len(v), len(v[0])
+	case 1:
+		if dims[0]*2 != len(v)*len(v[0]) {
+			s := "\nIn mat64.%s, a 2D slice of data and 1 int were passed.\n"
+			s += "This would generate a %d by %d Mat. However, %d*%d does not\n"
+			s += "equal the number of elements in the passed 2D slice, %d.\n"
+			s += "Note that this function expects a non-jagged 2D slice, and\n"
+			s += "is assumed that every row in the passed 2D slice contains\n"
+			s += "%d elements."
+			s = fmt.Sprintf(s, "FromData()", dims[0], dims[0], dims[0], dims[0],
+				len(v)*len(v[0]), len(v[0]))
+			printHelperErr(s)
+		}
+		m.vals = make([]float64, dims[0]*dims[0], dims[0]*dims[0]*2)
+		for i := range v {
+			for j := range v[i] {
+				m.vals[i*len(v[0])+j] = v[i][j]
+			}
+		}
+		m.r, m.c = len(v), len(v[0])
+	case 2:
+		if dims[0] != len(v) || dims[1] != len(v[0]) {
+			s := "\nIn mat64.%s, a 2D slice of data and 2 ints were passed.\n"
+			s += "However, the requested number of rows and columns (%d and %d)\n"
+			s += "of the resultant Mat does not match the length and width of\n"
+			s += "the data slice (%d and %d)."
+			s = fmt.Sprintf(s, "FromData()", dims[0], dims[1], len(v), len(v[0]))
+			printHelperErr(s)
+		}
+		m.vals = make([]float64, dims[0]*dims[1], dims[0]*dims[1]*2)
+		for i := range v {
+			for j := range v[i] {
+				m.vals[i*len(v[0])+j] = v[i][j]
+			}
+		}
+		m.r, m.c = len(v), len(v[0])
+	default:
+		s := "\nIn mat64.%s, a 2D slice of data and %d ints were passed.\n"
+		s += "However, this function expects 0 to 2 ints. Review the docs for\n"
+		s += "this function and adjust the number of integers passed accordingly."
+		s = fmt.Sprintf(s, "FromData()", len(dims))
+		printHelperErr(s)
+	} // switch len(dims) for case [][]float64
 	return m
 }
 
@@ -592,7 +613,7 @@ func (m *Mat) SetCol(col int, floatOrSlice interface{}) *Mat {
 		}
 	default:
 		s := "\nIn mat64.%s, the passed value must be a float64 or []float64.\n"
-		s += "However, value of type  \"%v\" was received.\n"
+		s += "However, value of type  %v was received.\n"
 		s = fmt.Sprintf(s, "SetCol()", reflect.TypeOf(val))
 		printErr(s)
 	}
@@ -650,7 +671,7 @@ func (m *Mat) SetRow(row int, floatOrSlice interface{}) *Mat {
 		}
 	default:
 		s := "\nIn mat64.%s, the passed value must be a float64 or []float64.\n"
-		s += "However, value of type  \"%v\" was received.\n"
+		s += "However, value of type  %v was received.\n"
 		s = fmt.Sprintf(s, "SetRow()", reflect.TypeOf(val))
 		printErr(s)
 	}
