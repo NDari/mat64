@@ -24,11 +24,7 @@ import (
 	"math/rand"
 	"os"
 	"reflect"
-	"runtime/debug"
 	"strconv"
-	"strings"
-
-	"github.com/fatih/color"
 )
 
 /*
@@ -46,40 +42,22 @@ type Mat struct {
 	vals []float64
 }
 
-func printErr(s string) {
-	color.Red(s)
-	color.Yellow("\nStack trace for this error:\n\n")
-	q := string(debug.Stack())
-	w := strings.Split(q, "\n")
-	fmt.Println(strings.Join(w[7:], "\n"))
-	os.Exit(1)
-}
-
-func printHelperErr(s string) {
-	color.Red(s)
-	color.Yellow("\nStack trace for this error:\n\n")
-	q := string(debug.Stack())
-	w := strings.Split(q, "\n")
-	fmt.Println(strings.Join(w[9:], "\n"))
-	os.Exit(1)
-}
-
 /*
 New is the primary constructor for the "Mat" object. New is a variadic function,
-expecting 0 to 3 integers, with differing behavior as follows:
+expecting 0 to 2 integers, with differing behavior as follows:
 
-	m := New()
+	m := mat64.New()
 
 m is now an empty &Mat{}, where the number of rows,
 columns and the length and capacity of the underlying
 slice are all zero. This is mostly for internal use.
 
-	m := New(x)
+	m := mat64.New(x)
 
 m is a x by x (square) matrix, with the underlying
 slice of length x, and capacity 2x.
 
-	m := New(x, y)
+	m := mat64.New(x, y)
 
 m is an x by y matrix, with the underlying slice of
 length xy, and capacity of 2xy. This is a good case
@@ -87,13 +65,6 @@ for when your matrix is going to expand in the
 future. There is a negligible hit to performance
 and a larger memory usage of your code. But in case
 expanding matrices, many re-allocations are avoided.
-
-	m := New(x, y, z)
-
-m is a x by u matrix, with the underlying slice of
-length xy, and capacity z. This is a good choice for
-when the size of the matrix is static, or when the
-application is memory constrained.
 
 For most cases, we recommend using the New(x) or New(x, y) options, and
 almost never the New() option.
@@ -119,14 +90,8 @@ func New(dims ...int) *Mat {
 			dims[1],
 			make([]float64, dims[0]*dims[1], 2*dims[0]*dims[1]),
 		}
-	case 3:
-		m = &Mat{
-			dims[0],
-			dims[1],
-			make([]float64, dims[0]*dims[1], dims[2]),
-		}
 	default:
-		s := "\nIn mat64.%s, expected 0 to 3 arguments, but received %d arguments."
+		s := "\nIn mat64.%s, expected 0 to 2 arguments, but received %d arguments."
 		s = fmt.Sprintf(s, "New()", len(dims))
 		printErr(s)
 	}
@@ -194,19 +159,18 @@ Choose the format that suits your needs, as there is no performance
 difference between the two forms.
 */
 func FromData(oneOrTwoDSlice interface{}, dims ...int) *Mat {
-	m := New()
 	switch v := oneOrTwoDSlice.(type) {
 	case []float64:
-		m = fromOneDSliceHelper(v, dims)
+		return fromOneDSliceHelper(v, dims)
 	case [][]float64:
-		m = fromTwoDSliceHelper(v, dims)
+		return fromTwoDSliceHelper(v, dims)
 	default:
 		s := "\nIn mat64.%s, expected input data of type []float64 or\n"
 		s += "[][]float64, However, data of type \"%v\" was received."
 		s = fmt.Sprintf(s, "FromData()", reflect.TypeOf(v))
 		printErr(s)
-	} // switch data.(type)
-	return m
+	}
+	return nil
 }
 
 func fromOneDSliceHelper(v []float64, dims []int) *Mat {
@@ -260,7 +224,7 @@ func fromTwoDSliceHelper(v [][]float64, dims []int) *Mat {
 		}
 		m.r, m.c = len(v), len(v[0])
 	case 1:
-		if dims[0]*2 != len(v)*len(v[0]) {
+		if dims[0]*dims[0] != len(v)*len(v[0]) {
 			s := "\nIn mat64.%s, a 2D slice of data and 1 int were passed.\n"
 			s += "This would generate a %d by %d Mat. However, %d*%d does not\n"
 			s += "equal the number of elements in the passed 2D slice, %d.\n"
@@ -277,7 +241,7 @@ func fromTwoDSliceHelper(v [][]float64, dims []int) *Mat {
 				m.vals[i*len(v[0])+j] = v[i][j]
 			}
 		}
-		m.r, m.c = len(v), len(v[0])
+		m.r, m.c = dims[0], dims[0]
 	case 2:
 		if dims[0] != len(v) || dims[1] != len(v[0]) {
 			s := "\nIn mat64.%s, a 2D slice of data and 2 ints were passed.\n"
@@ -340,11 +304,9 @@ func FromCSV(filename string) *Mat {
 		s = fmt.Sprintf(s, "FromCSV()", filename, err)
 		printErr(s)
 	}
-	line := 1
-	m := New()
 	// Start with one row, and set the number of entries per row
-	m.r = 1
-	m.c = len(str)
+	m := New()
+	m.r, m.c = 1, len(str)
 	row := make([]float64, len(str))
 	for {
 		for i := range str {
@@ -352,7 +314,7 @@ func FromCSV(filename string) *Mat {
 			if err != nil {
 				s := "\nIn mat64.%s, item %d in line %d is %s, which cannot\n"
 				s += "be converted to a float64 due to: %v"
-				s = fmt.Sprintf(s, "FromCSV()", i, line, str[i], err)
+				s = fmt.Sprintf(s, "FromCSV()", i, m.r, str[i], err)
 				printErr(s)
 			}
 		}
@@ -365,15 +327,6 @@ func FromCSV(filename string) *Mat {
 			}
 			s := "\nIn mat64.%s, cannot read from %s due to error: %v.\n"
 			s = fmt.Sprintf(s, "FromCSV()", filename, err)
-			printErr(s)
-		}
-		line++
-		if len(str) != len(row) {
-			s := "\nIn mat64.%s, line %d in %s has %d entries. The first line\n"
-			s += "(line 1) has %d entries.\n"
-			s += "All the lines in the CSV file must contains the same number\n"
-			s += "of entries.\n"
-			s = fmt.Sprintf(s, "Load()", line, filename, len(str), len(row))
 			printErr(s)
 		}
 		m.r++
@@ -396,7 +349,6 @@ With this call, m is a 2X3 Mat whose elements have values randomly selected from
 the range (0, x], (includes 0, but excludes x).
 
 	m := mat64.Rand(2, 3, x, y)
-
 
 With this call, m is a 2X3 Mat whose elements have values randomly selected from
 the range (x, y], (includes x, but excludes y). In this case, x must be strictly
@@ -546,16 +498,16 @@ func (m *Mat) SetAll(val float64) *Mat {
 }
 
 /*
-Foreach applies a given function to each element of a mat object. The given
+Map applies a given function to each element of a mat object. The given
 function must take a pointer to a float64, and return nothing. For eaxmple,
 lets say that we wish to take the error function of each element of a Mat. The
 following would do this:
 
-	m.Foreach(func(i *float64) {
+	m.Map(func(i *float64) {
 		*i = math.Erf(*i)
 	})
 */
-func (m *Mat) Foreach(f func(*float64)) *Mat {
+func (m *Mat) Map(f func(*float64)) *Mat {
 	for i := range m.vals {
 		f(&m.vals[i])
 	}
@@ -975,7 +927,7 @@ of this method changes:
 
 If the passed object is a float64, then each element is multiplied by it:
 
-	m := New(2, 3).SetAll(5.0)
+	m := mat64.New(2, 3).SetAll(5.0)
 	m.Mul(2.0)
 
 This will result in all values of m being 10.0.
@@ -983,7 +935,7 @@ The passed Object can also be a Mat, in which case each element of the receiver
 are multiplied by the corresponding element of the passed Mat. Note that the
 passed Mat must have the same shape as the receiver.
 
-	m := New(2, 3).SetAll(10.0)
+	m := mat64.New(2, 3).SetAll(10.0)
 	n := m.Copy()
 	m.Mul(n)
 
@@ -1031,7 +983,7 @@ of this method changes:
 
 If the passed object is a float64, then it is added to each element:
 
-	m := New(2, 3).SetAll(5.0)
+	m := mat64.New(2, 3).SetAll(5.0)
 	m.Add(2.0)
 
 This will result in all values of m being 7.0.
@@ -1039,7 +991,7 @@ The passed Object can also be a Mat, in which case each element of the element
 of the passed Mat is added to the corresponding element of the receiver. Note
 that the passed Mat must have the same shape as the receiver.
 
-	m := New(2, 3).SetAll(10.0)
+	m := mat64.New(2, 3).SetAll(10.0)
 	n := m.Copy()
 	m.Add(n)
 
@@ -1085,7 +1037,7 @@ of this method changes:
 
 If the passed object is a float64, then it is subtracted from each element:
 
-	m := New(2, 3).SetAll(5.0)
+	m := mat64.New(2, 3).SetAll(5.0)
 	m.Sub(2.0)
 
 This will result in all values of m being 3.0.
@@ -1093,7 +1045,7 @@ The passed Object can also be a Mat, in which case each element of the passed
 Mat is subtracted from the corresponding element of the receiver. Note
 that the passed Mat must have the same shape as the receiver.
 
-	m := New(2, 3).SetAll(10.0)
+	m := mat64.New(2, 3).SetAll(10.0)
 	n := m.Copy()
 	m.Sub(n)
 
@@ -1151,7 +1103,7 @@ Mat is subtracted from the corresponding element of the receiver. Note
 that the passed Mat must have the same shape as the receiver, and it cannot
 contains any elements which are 0.0.
 
-	m := New(2, 3).SetAll(10.0)
+	m := mat64.New(2, 3).SetAll(10.0)
 	n := m.Copy()
 	m.Div(n)
 
@@ -1433,8 +1385,8 @@ func (m *Mat) Std(args ...int) float64 {
 Dot is the matrix multiplication of two mat objects. Consider the following two
 mats:
 
-	m := New(5, 6)
-	n := New(6, 10)
+	m := mat64.New(5, 6)
+	n := mat64.New(6, 10)
 
 then
 
@@ -1548,8 +1500,8 @@ Concat merges a passed mat to the right side of the receiver. The passed mat
 must therefore have the same number of rows as the receiver.
 For example:
 
-	m := New(1, 2).SetAll(2.0) // [[2.0, 2.0]]
-	n := New(1, 3).SetAll(3.0) // [[3.0, 3.0, 3.0]]
+	m := mat64.New(1, 2).SetAll(2.0) // [[2.0, 2.0]]
+	n := mat64.New(1, 3).SetAll(3.0) // [[3.0, 3.0, 3.0]]
 	m.Concat(n)
 	fmt.Println(m) // [[2.0, 2.0, 3.0, 3.0, 3.0]]
 
@@ -1583,8 +1535,8 @@ Append merges a passed mat to the botton of the receiver. The passed mat
 must therefore have the same number of columns as the receiver.
 For example:
 
-	m := New(1, 2).SetAll(2.0) // [[2.0, 2.0]]
-	n := New(2, 2).SetAll(3.0) // [[3.0, 3.0], [3.0, 3.0]]
+	m := mat64.New(1, 2).SetAll(2.0) // [[2.0, 2.0]]
+	n := mat64.New(2, 2).SetAll(3.0) // [[3.0, 3.0], [3.0, 3.0]]
 	m.Append(n)
 	fmt.Println(m) // [[2.0, 2.0], [3.0, 3.0], [3.0, 3.0]]
 
