@@ -1,4 +1,4 @@
-package mat64
+package matrix
 
 import (
 	"math"
