@@ -1,4 +1,4 @@
-package mat64
+package matrix
 
 import (
 	"log"
@@ -8,46 +8,46 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNew(t *testing.T) {
+func TestNewf64(t *testing.T) {
 	rows := 13
 	cols := 7
-	m := New()
+	m := Newf64()
 	assert.Equal(t, 0, m.r, "should be zero")
 	assert.Equal(t, 0, m.c, "should be zero")
 	assert.NotNil(t, m.vals, "should not be nil")
 	assert.Equal(t, 0, len(m.vals), "should be zero")
 	assert.Equal(t, 0, cap(m.vals), "should be zero")
 
-	m = New(rows)
+	m = Newf64(rows)
 	assert.Equal(t, rows, m.r, "should be equal")
 	assert.Equal(t, rows, m.c, "should be equal")
 	assert.NotNil(t, m.vals, "should not be nil")
 	assert.Equal(t, rows*rows, len(m.vals), "should be equal")
 	assert.Equal(t, 2*rows*rows, cap(m.vals), "should have twice the capacity")
 
-	m = New(rows, cols)
+	m = Newf64(rows, cols)
 	assert.Equal(t, rows, m.r, "should be equal")
 	assert.Equal(t, cols, m.c, "should be equal")
 	assert.NotNil(t, m.vals, "should not be nil")
 	assert.Equal(t, rows*cols, len(m.vals), "should be equal")
 	assert.Equal(t, 2*rows*cols, cap(m.vals), "should have twice the capacity")
 
-	assert.Panics(t, func() { New(1, 2, 3) }, "should panic with 3+ args")
-	assert.Panics(t, func() { New(1, 2, 3, 4) }, "should panic with 3+ args")
+	assert.Panics(t, func() { Newf64(1, 2, 3) }, "should panic with 3+ args")
+	assert.Panics(t, func() { Newf64(1, 2, 3, 4) }, "should panic with 3+ args")
 }
 
-func TestFromData(t *testing.T) {
+func TestMatf64FromData(t *testing.T) {
 	rows := 50
 	cols := 2
 
-	assert.Panics(t, func() { FromData(1.0) }, "should panic with wrong arg")
+	assert.Panics(t, func() { Matf64FromData(1.0) }, "should panic with wrong arg")
 
 	v := make([]float64, rows*cols)
 	for i := range v {
 		v[i] = float64(i * i)
 	}
 
-	m := FromData(v)
+	m := Matf64FromData(v)
 	assert.Equal(t, 1, m.r, "should have one row")
 	assert.Equal(t, len(v), len(m.vals), "should have the same # of elements")
 	for i := range v {
@@ -59,7 +59,7 @@ func TestFromData(t *testing.T) {
 	assert.NotEqual(t, m.vals[0], v[0], "changing mat should not effect data")
 
 	v[0] = 0.0
-	m = FromData(v, rows*cols)
+	m = Matf64FromData(v, rows*cols)
 	assert.Equal(t, rows*cols, m.r, "should be equal")
 	assert.Equal(t, 1, m.c, "should have one col")
 	assert.Equal(t, len(v), len(m.vals), "should have the same # of elements")
@@ -72,7 +72,7 @@ func TestFromData(t *testing.T) {
 	assert.NotEqual(t, m.vals[0], v[0], "changing mat should not effect data")
 
 	v[0] = 0.0
-	m = FromData(v, rows, cols)
+	m = Matf64FromData(v, rows, cols)
 	assert.Equal(t, rows, m.r, "should be equal")
 	assert.Equal(t, cols, m.c, "should be equal")
 	assert.Equal(t, len(v), len(m.vals), "should have the same # of elements")
@@ -84,9 +84,9 @@ func TestFromData(t *testing.T) {
 	m.vals[0] = 1201.0
 	assert.NotEqual(t, m.vals[0], v[0], "changing mat should not effect data")
 
-	assert.Panics(t, func() { FromData(v, 12) }, "wrong expected size")
-	assert.Panics(t, func() { FromData(v, 11, 2) }, "wrong expected size")
-	assert.Panics(t, func() { FromData(v, 1, 2, 3) }, "too many args")
+	assert.Panics(t, func() { Matf64FromData(v, 12) }, "wrong expected size")
+	assert.Panics(t, func() { Matf64FromData(v, 11, 2) }, "wrong expected size")
+	assert.Panics(t, func() { Matf64FromData(v, 1, 2, 3) }, "too many args")
 
 	s := make([][]float64, rows)
 	for i := range s {
@@ -97,7 +97,7 @@ func TestFromData(t *testing.T) {
 			s[i][j] = float64(i + j)
 		}
 	}
-	m = FromData(s)
+	m = Matf64FromData(s)
 	assert.Equal(t, rows*cols, len(m.vals), "should be equal")
 	assert.Equal(t, 2*rows*cols, cap(m.vals), "should be equal")
 	idx := 0
@@ -113,7 +113,7 @@ func TestFromData(t *testing.T) {
 	assert.NotEqual(t, m.vals[0], s[0][0], "changing mat should not effect data")
 
 	s[0][0] = 0.0
-	m = FromData(s, 10)
+	m = Matf64FromData(s, 10)
 	assert.Equal(t, 10, m.r, "should be equal")
 	assert.Equal(t, 10, m.c, "should be equal")
 	assert.Equal(t, 100, len(m.vals), "should be equal")
@@ -131,7 +131,7 @@ func TestFromData(t *testing.T) {
 	assert.NotEqual(t, m.vals[0], s[0][0], "changing mat should not effect data")
 
 	s[0][0] = 0.0
-	m = FromData(s, rows, cols)
+	m = Matf64FromData(s, rows, cols)
 	assert.Equal(t, rows, m.r, "should be equal")
 	assert.Equal(t, cols, m.c, "should be equal")
 	assert.Equal(t, rows*cols, len(m.vals), "should be equal")
@@ -148,18 +148,18 @@ func TestFromData(t *testing.T) {
 	m.vals[0] = 1201.0
 	assert.NotEqual(t, m.vals[0], s[0][0], "changing mat should not effect data")
 
-	assert.Panics(t, func() { FromData(s, 15) }, "wrong expected size")
-	assert.Panics(t, func() { FromData(s, 1, 2) }, "wrong expected size")
-	assert.Panics(t, func() { FromData(s, 12, 12, 4) }, "too many args")
+	assert.Panics(t, func() { Matf64FromData(s, 15) }, "wrong expected size")
+	assert.Panics(t, func() { Matf64FromData(s, 1, 2) }, "wrong expected size")
+	assert.Panics(t, func() { Matf64FromData(s, 12, 12, 4) }, "too many args")
 }
 
-func TestFromCSV(t *testing.T) {
+func TestMatf64FromCSV(t *testing.T) {
 	rows := 3
 	cols := 4
 
 	filename := "non-exitant-file"
 
-	assert.Panics(t, func() { FromCSV(filename) }, "should panic")
+	assert.Panics(t, func() { Matf64FromCSV(filename) }, "should panic")
 
 	filename = "test.csv"
 	str := "1.0,1.0,2.0,3.0\n5.0,8.0,13.0,21.0\n34.0,55.0,89.0,144.0"
@@ -182,7 +182,7 @@ func TestFromCSV(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	m := FromCSV(filename)
+	m := Matf64FromCSV(filename)
 	assert.Equal(t, rows*cols, len(m.vals), "should be equal")
 	assert.Equal(t, 1.0, m.vals[0], "should be equal")
 	assert.Equal(t, 1.0, m.vals[1], "should be equal")
@@ -199,27 +199,27 @@ func TestRand(t *testing.T) {
 	rows := 31
 	cols := 42
 
-	m := Rand(rows, cols)
+	m := RandMatf64(rows, cols)
 	for i := 0; i < rows*cols; i++ {
 		if m.vals[i] < 0.0 || m.vals[i] >= 1.0 {
 			t.Errorf("at index %d, expected [0, 1.0), got %f", i, m.vals[i])
 		}
 	}
-	m = Rand(rows, cols, 100.0)
+	m = RandMatf64(rows, cols, 100.0)
 	for i := 0; i < rows*cols; i++ {
 		if m.vals[i] < 0.0 || m.vals[i] >= 100.0 {
 			t.Errorf("at index %d, expected [0, 100.0), got %f", i, m.vals[i])
 		}
 	}
-	m = Rand(rows, cols, -12.0, 2.0)
+	m = RandMatf64(rows, cols, -12.0, 2.0)
 	for i := 0; i < rows*cols; i++ {
 		if m.vals[i] < -12.0 || m.vals[i] >= 2.0 {
 			t.Errorf("at index %d, expected [-12.0, 2.0), got %f", i, m.vals[i])
 		}
 	}
 
-	assert.Panics(t, func() { Rand(rows, cols, 12.0, 2.0, 13.0) }, "should panic")
-	assert.Panics(t, func() { Rand(rows, cols, 12.0, 2.0) }, "should panic")
+	assert.Panics(t, func() { RandMatf64(rows, cols, 12.0, 2.0, 13.0) }, "should panic")
+	assert.Panics(t, func() { RandMatf64(rows, cols, 12.0, 2.0) }, "should panic")
 }
 
 func TestReshape(t *testing.T) {
@@ -228,7 +228,7 @@ func TestReshape(t *testing.T) {
 	for i := 0; i < len(s); i++ {
 		s[i] = float64(i * 3)
 	}
-	m := FromData(s).Reshape(rows, cols)
+	m := Matf64FromData(s).Reshape(rows, cols)
 	assert.Equal(t, rows, m.r, "should be equal")
 	assert.Equal(t, cols, m.c, "should be equal")
 	for i := 0; i < len(s); i++ {
@@ -239,7 +239,7 @@ func TestReshape(t *testing.T) {
 }
 
 func TestShape(t *testing.T) {
-	m := New(11, 10)
+	m := Newf64(11, 10)
 	r, c := m.Shape()
 	assert.Equal(t, r, m.r, "should be equal")
 	assert.Equal(t, c, m.c, "should be equal")
@@ -247,7 +247,7 @@ func TestShape(t *testing.T) {
 
 func TestVals(t *testing.T) {
 	rows, cols := 22, 22
-	m := New(rows, cols)
+	m := Newf64(rows, cols)
 	m.SetAll(1.0)
 	assert.Equal(t, rows*cols, len(m.vals), "should be equal")
 	for i := range m.vals {
@@ -258,7 +258,7 @@ func TestVals(t *testing.T) {
 func TestToSlice(t *testing.T) {
 	rows := 13
 	cols := 21
-	m := New(rows, cols)
+	m := Newf64(rows, cols)
 	for i := 0; i < m.r*m.c; i++ {
 		m.vals[i] = float64(i)
 	}
@@ -280,13 +280,13 @@ func TestToSlice(t *testing.T) {
 }
 
 func TestToCSV(t *testing.T) {
-	m := New(23, 17)
+	m := Newf64(23, 17)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
 	filename := "tocsv_test.csv"
 	m.ToCSV(filename)
-	n := FromCSV(filename)
+	n := Matf64FromCSV(filename)
 	if !n.Equals(m) {
 		t.Errorf("m and n are not equal")
 	}
@@ -296,7 +296,7 @@ func TestToCSV(t *testing.T) {
 func TestGet(t *testing.T) {
 	rows := 17
 	cols := 13
-	m := New(rows, cols)
+	m := Newf64(rows, cols)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -316,14 +316,14 @@ func TestMap(t *testing.T) {
 		*i = 1.0
 		return
 	}
-	m := New(rows, cols).Map(f)
+	m := Newf64(rows, cols).Map(f)
 	for i := 0; i < rows*cols; i++ {
 		assert.Equal(t, 1.0, m.vals[i], "should be equal")
 	}
 }
 
 func BenchmarkMap(b *testing.B) {
-	m := New(1721, 311)
+	m := Newf64(1721, 311)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -341,20 +341,20 @@ func TestSetAll(t *testing.T) {
 	row := 3
 	col := 4
 	val := 11.0
-	m := New(row, col).SetAll(val)
+	m := Newf64(row, col).SetAll(val)
 	for i := 0; i < row*col; i++ {
 		assert.Equal(t, val, m.vals[i], "should be equal")
 	}
 }
 
 func TestSet(t *testing.T) {
-	m := New(5)
+	m := Newf64(5)
 	m.Set(2, 3, 10.0)
 	assert.Equal(t, 10.0, m.vals[13], "should be equal")
 }
 
 func TestSetCol(t *testing.T) {
-	m := New(3, 4)
+	m := Newf64(3, 4)
 	m.SetCol(-1, 3.0)
 	n := m.Col(-1)
 	for i := range n.vals {
@@ -385,7 +385,7 @@ func TestSetCol(t *testing.T) {
 }
 
 func TestSetRow(t *testing.T) {
-	m := New(3, 4)
+	m := Newf64(3, 4)
 	m.SetRow(-1, 3.0)
 	n := m.Row(-1)
 	for i := range n.vals {
@@ -418,7 +418,7 @@ func TestSetRow(t *testing.T) {
 func TestCol(t *testing.T) {
 	row := 3
 	col := 4
-	m := New(row, col)
+	m := Newf64(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -437,7 +437,7 @@ func TestCol(t *testing.T) {
 }
 
 func BenchmarkCol(b *testing.B) {
-	m := New(1721, 311)
+	m := Newf64(1721, 311)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -450,7 +450,7 @@ func BenchmarkCol(b *testing.B) {
 func TestRow(t *testing.T) {
 	row := 3
 	col := 4
-	m := New(row, col)
+	m := Newf64(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -465,7 +465,7 @@ func TestRow(t *testing.T) {
 }
 
 func BenchmarkRow(b *testing.B) {
-	m := New(1721, 311)
+	m := Newf64(1721, 311)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -476,7 +476,7 @@ func BenchmarkRow(b *testing.B) {
 }
 
 func TestMin(t *testing.T) {
-	m := New(3, 4)
+	m := Newf64(3, 4)
 	m.Set(2, 1, -100.0)
 	_, minVal := m.Min()
 	assert.Equal(t, -100.0, minVal, "should be equal")
@@ -489,7 +489,7 @@ func TestMin(t *testing.T) {
 }
 
 func TestMax(t *testing.T) {
-	m := New(3, 4)
+	m := Newf64(3, 4)
 	m.Set(2, 1, 100.0)
 	_, maxVal := m.Max()
 	assert.Equal(t, 100.0, maxVal, "should be equal")
@@ -502,7 +502,7 @@ func TestMax(t *testing.T) {
 }
 
 func TestEquals(t *testing.T) {
-	m := New(13, 12)
+	m := Newf64(13, 12)
 	if !m.Equals(m) {
 		t.Errorf("m is not equal itself")
 	}
@@ -510,7 +510,7 @@ func TestEquals(t *testing.T) {
 
 func TestCopy(t *testing.T) {
 	rows, cols := 17, 13
-	m := New(rows, cols)
+	m := Newf64(rows, cols)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -521,7 +521,7 @@ func TestCopy(t *testing.T) {
 }
 
 func TestT(t *testing.T) {
-	m := New(12, 3)
+	m := Newf64(12, 3)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -536,7 +536,7 @@ func TestT(t *testing.T) {
 }
 
 func BenchmarkT(b *testing.B) {
-	m := New(1000, 251)
+	m := Newf64(1000, 251)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -547,7 +547,7 @@ func BenchmarkT(b *testing.B) {
 }
 
 func TestAll(t *testing.T) {
-	m := New(100, 21)
+	m := Newf64(100, 21)
 	for i := range m.vals {
 		m.vals[i] = float64(i + 1)
 	}
@@ -560,7 +560,7 @@ func TestAll(t *testing.T) {
 }
 
 func TestAny(t *testing.T) {
-	m := New(100, 21)
+	m := Newf64(100, 21)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -570,7 +570,7 @@ func TestAny(t *testing.T) {
 
 func TestMul(t *testing.T) {
 	rows, cols := 13, 90
-	m := New(rows, cols)
+	m := Newf64(rows, cols)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -582,11 +582,11 @@ func TestMul(t *testing.T) {
 }
 
 func BenchmarkMul(b *testing.B) {
-	n := New(1000, 1000)
+	n := Newf64(1000, 1000)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}
-	m := New(1000, 1000)
+	m := Newf64(1000, 1000)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -598,7 +598,7 @@ func BenchmarkMul(b *testing.B) {
 
 func TestAdd(t *testing.T) {
 	rows, cols := 13, 90
-	m := New(rows, cols)
+	m := Newf64(rows, cols)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -611,7 +611,7 @@ func TestAdd(t *testing.T) {
 
 func TestSub(t *testing.T) {
 	rows, cols := 13, 90
-	m := New(rows, cols)
+	m := Newf64(rows, cols)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -623,7 +623,7 @@ func TestSub(t *testing.T) {
 
 func TestDiv(t *testing.T) {
 	rows, cols := 13, 90
-	m := New(rows, cols)
+	m := Newf64(rows, cols)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -637,7 +637,7 @@ func TestDiv(t *testing.T) {
 func TestSum(t *testing.T) {
 	row := 12
 	col := 17
-	m := New(row, col).SetAll(1.0)
+	m := Newf64(row, col).SetAll(1.0)
 	for i := 0; i < row; i++ {
 		assert.Equal(t, float64(col), m.Sum(0, i), "should be equal")
 	}
@@ -649,7 +649,7 @@ func TestSum(t *testing.T) {
 func TestAvg(t *testing.T) {
 	row := 12
 	col := 17
-	m := New(row, col).SetAll(1.0)
+	m := Newf64(row, col).SetAll(1.0)
 	for i := 0; i < row; i++ {
 		assert.Equal(t, 1.0, m.Avg(0, i), "should be equal")
 	}
@@ -661,7 +661,7 @@ func TestAvg(t *testing.T) {
 func TestPrd(t *testing.T) {
 	row := 12
 	col := 17
-	m := New(row, col).SetAll(1.0)
+	m := Newf64(row, col).SetAll(1.0)
 	for i := 0; i < row; i++ {
 		assert.Equal(t, 1.0, m.Prd(0, i), "should be equal")
 	}
@@ -673,7 +673,7 @@ func TestPrd(t *testing.T) {
 func TestStd(t *testing.T) {
 	row := 12
 	col := 17
-	m := New(row, col).SetAll(1.0)
+	m := Newf64(row, col).SetAll(1.0)
 	for i := 0; i < row; i++ {
 		assert.Equal(t, 0.0, m.Std(0, i), "should be equal")
 	}
@@ -687,18 +687,18 @@ func TestDot(t *testing.T) {
 		row = 10
 		col = 4
 	)
-	m := New(row, col)
+	m := Newf64(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
-	n := New(col, row)
+	n := Newf64(col, row)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}
 	o := m.Dot(n)
 	assert.Equal(t, row, o.r, "should be equal")
 	assert.Equal(t, row, o.c, "should be equal")
-	p := New(row, row)
+	p := Newf64(row, row)
 	q := o.Dot(p)
 	for i := 0; i < row*row; i++ {
 		assert.Equal(t, 0.0, q.vals[i], "should be zero")
@@ -707,11 +707,11 @@ func TestDot(t *testing.T) {
 
 func BenchmarkDot(b *testing.B) {
 	row, col := 150, 130
-	m := New(row, col)
+	m := Newf64(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
-	n := New(col, row)
+	n := Newf64(col, row)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}
@@ -726,7 +726,7 @@ func TestAppendCol(t *testing.T) {
 		row = 10
 		col = 4
 	)
-	m := New(row, col)
+	m := Newf64(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -744,7 +744,7 @@ func TestAppendRow(t *testing.T) {
 		row = 3
 		col = 4
 	)
-	m := New(row, col)
+	m := Newf64(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -765,11 +765,11 @@ func TestConcat(t *testing.T) {
 		row = 10
 		col = 4
 	)
-	m := New(row, col)
+	m := Newf64(row, col)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
-	n := New(row, row)
+	n := Newf64(row, row)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}

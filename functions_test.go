@@ -1,9 +1,9 @@
-package mat64
+package matrix
 
 import "testing"
 
 func TestFunctions(t *testing.T) {
-	m := New(10, 12)
+	m := Newf64(10, 12)
 	for i := range m.vals {
 		m.vals[i] = float64(i * 2)
 	}
