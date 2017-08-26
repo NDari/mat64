@@ -9,6 +9,7 @@ import (
 )
 
 func TestNewf64(t *testing.T) {
+	t.Helper()
 	rows := 13
 	cols := 7
 	m := Newf64()
@@ -37,6 +38,7 @@ func TestNewf64(t *testing.T) {
 }
 
 func TestMatf64FromData(t *testing.T) {
+	t.Helper()
 	rows := 50
 	cols := 2
 
@@ -154,6 +156,7 @@ func TestMatf64FromData(t *testing.T) {
 }
 
 func TestMatf64FromCSV(t *testing.T) {
+	t.Helper()
 	rows := 3
 	cols := 4
 
@@ -196,6 +199,7 @@ func TestMatf64FromCSV(t *testing.T) {
 }
 
 func TestRand(t *testing.T) {
+	t.Helper()
 	rows := 31
 	cols := 42
 
@@ -223,6 +227,7 @@ func TestRand(t *testing.T) {
 }
 
 func TestReshape(t *testing.T) {
+	t.Helper()
 	rows, cols := 10, 12
 	s := make([]float64, 120)
 	for i := 0; i < len(s); i++ {
@@ -239,6 +244,7 @@ func TestReshape(t *testing.T) {
 }
 
 func TestShape(t *testing.T) {
+	t.Helper()
 	m := Newf64(11, 10)
 	r, c := m.Shape()
 	assert.Equal(t, r, m.r, "should be equal")
@@ -246,6 +252,7 @@ func TestShape(t *testing.T) {
 }
 
 func TestVals(t *testing.T) {
+	t.Helper()
 	rows, cols := 22, 22
 	m := Newf64(rows, cols)
 	m.SetAll(1.0)
@@ -256,6 +263,7 @@ func TestVals(t *testing.T) {
 }
 
 func TestToSlice(t *testing.T) {
+	t.Helper()
 	rows := 13
 	cols := 21
 	m := Newf64(rows, cols)
@@ -280,6 +288,7 @@ func TestToSlice(t *testing.T) {
 }
 
 func TestToCSV(t *testing.T) {
+	t.Helper()
 	m := Newf64(23, 17)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
@@ -294,6 +303,7 @@ func TestToCSV(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
+	t.Helper()
 	rows := 17
 	cols := 13
 	m := Newf64(rows, cols)
@@ -310,6 +320,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
+	t.Helper()
 	rows := 132
 	cols := 24
 	f := func(i *float64) {
@@ -338,6 +349,7 @@ func BenchmarkMap(b *testing.B) {
 }
 
 func TestSetAll(t *testing.T) {
+	t.Helper()
 	row := 3
 	col := 4
 	val := 11.0
@@ -348,12 +360,14 @@ func TestSetAll(t *testing.T) {
 }
 
 func TestSet(t *testing.T) {
+	t.Helper()
 	m := Newf64(5)
 	m.Set(2, 3, 10.0)
 	assert.Equal(t, 10.0, m.vals[13], "should be equal")
 }
 
 func TestSetCol(t *testing.T) {
+	t.Helper()
 	m := Newf64(3, 4)
 	m.SetCol(-1, 3.0)
 	n := m.Col(-1)
@@ -385,6 +399,7 @@ func TestSetCol(t *testing.T) {
 }
 
 func TestSetRow(t *testing.T) {
+	t.Helper()
 	m := Newf64(3, 4)
 	m.SetRow(-1, 3.0)
 	n := m.Row(-1)
@@ -416,6 +431,7 @@ func TestSetRow(t *testing.T) {
 }
 
 func TestCol(t *testing.T) {
+	t.Helper()
 	row := 3
 	col := 4
 	m := Newf64(row, col)
@@ -448,6 +464,7 @@ func BenchmarkCol(b *testing.B) {
 }
 
 func TestRow(t *testing.T) {
+	t.Helper()
 	row := 3
 	col := 4
 	m := Newf64(row, col)
@@ -476,6 +493,7 @@ func BenchmarkRow(b *testing.B) {
 }
 
 func TestMin(t *testing.T) {
+	t.Helper()
 	m := Newf64(3, 4)
 	m.Set(2, 1, -100.0)
 	_, minVal := m.Min()
@@ -489,6 +507,7 @@ func TestMin(t *testing.T) {
 }
 
 func TestMax(t *testing.T) {
+	t.Helper()
 	m := Newf64(3, 4)
 	m.Set(2, 1, 100.0)
 	_, maxVal := m.Max()
@@ -502,6 +521,7 @@ func TestMax(t *testing.T) {
 }
 
 func TestEquals(t *testing.T) {
+	t.Helper()
 	m := Newf64(13, 12)
 	if !m.Equals(m) {
 		t.Errorf("m is not equal itself")
@@ -509,6 +529,7 @@ func TestEquals(t *testing.T) {
 }
 
 func TestCopy(t *testing.T) {
+	t.Helper()
 	rows, cols := 17, 13
 	m := Newf64(rows, cols)
 	for i := range m.vals {
@@ -521,6 +542,7 @@ func TestCopy(t *testing.T) {
 }
 
 func TestT(t *testing.T) {
+	t.Helper()
 	m := Newf64(12, 3)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
@@ -547,11 +569,12 @@ func BenchmarkT(b *testing.B) {
 }
 
 func TestAll(t *testing.T) {
+	t.Helper()
 	m := Newf64(100, 21)
 	for i := range m.vals {
 		m.vals[i] = float64(i + 1)
 	}
-	assert.True(t, m.All(Positive), "All should be > 0")
+	assert.True(t, m.All(Positivef64), "All should be > 0")
 	isOne := func(i *float64) bool {
 		return *i == 1.0
 	}
@@ -560,15 +583,17 @@ func TestAll(t *testing.T) {
 }
 
 func TestAny(t *testing.T) {
+	t.Helper()
 	m := Newf64(100, 21)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
-	assert.False(t, m.Any(Negative), "should have no negatives")
-	assert.True(t, m.Any(Positive), "should have positives")
+	assert.False(t, m.Any(Negativef64), "should have no negatives")
+	assert.True(t, m.Any(Positivef64), "should have positives")
 }
 
 func TestMul(t *testing.T) {
+	t.Helper()
 	rows, cols := 13, 90
 	m := Newf64(rows, cols)
 	for i := range m.vals {
@@ -597,6 +622,7 @@ func BenchmarkMul(b *testing.B) {
 }
 
 func TestAdd(t *testing.T) {
+	t.Helper()
 	rows, cols := 13, 90
 	m := Newf64(rows, cols)
 	for i := range m.vals {
@@ -610,6 +636,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestSub(t *testing.T) {
+	t.Helper()
 	rows, cols := 13, 90
 	m := Newf64(rows, cols)
 	for i := range m.vals {
@@ -622,6 +649,7 @@ func TestSub(t *testing.T) {
 }
 
 func TestDiv(t *testing.T) {
+	t.Helper()
 	rows, cols := 13, 90
 	m := Newf64(rows, cols)
 	for i := range m.vals {
@@ -635,6 +663,7 @@ func TestDiv(t *testing.T) {
 }
 
 func TestSum(t *testing.T) {
+	t.Helper()
 	row := 12
 	col := 17
 	m := Newf64(row, col).SetAll(1.0)
@@ -647,6 +676,7 @@ func TestSum(t *testing.T) {
 }
 
 func TestAvg(t *testing.T) {
+	t.Helper()
 	row := 12
 	col := 17
 	m := Newf64(row, col).SetAll(1.0)
@@ -659,6 +689,7 @@ func TestAvg(t *testing.T) {
 }
 
 func TestPrd(t *testing.T) {
+	t.Helper()
 	row := 12
 	col := 17
 	m := Newf64(row, col).SetAll(1.0)
@@ -671,6 +702,7 @@ func TestPrd(t *testing.T) {
 }
 
 func TestStd(t *testing.T) {
+	t.Helper()
 	row := 12
 	col := 17
 	m := Newf64(row, col).SetAll(1.0)
@@ -683,6 +715,7 @@ func TestStd(t *testing.T) {
 }
 
 func TestDot(t *testing.T) {
+	t.Helper()
 	var (
 		row = 10
 		col = 4
@@ -722,6 +755,7 @@ func BenchmarkDot(b *testing.B) {
 }
 
 func TestAppendCol(t *testing.T) {
+	t.Helper()
 	var (
 		row = 10
 		col = 4
@@ -740,6 +774,7 @@ func TestAppendCol(t *testing.T) {
 }
 
 func TestAppendRow(t *testing.T) {
+	t.Helper()
 	var (
 		row = 3
 		col = 4
@@ -761,6 +796,7 @@ func TestAppendRow(t *testing.T) {
 }
 
 func TestConcat(t *testing.T) {
+	t.Helper()
 	var (
 		row = 10
 		col = 4

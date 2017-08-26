@@ -60,14 +60,7 @@ slice of length x, and capacity 2x.
 	m := matrix.Newf64(x, y)
 
 m is an x by y matrix, with the underlying slice of
-length xy, and capacity of 2xy. This is a good case
-for when your matrix is going to expand in the
-future. There is a negligible hit to performance
-and a larger memory usage of your code. But in case
-expanding matrices, many re-allocations are avoided.
-
-For most cases, we recommend using the Newf64(x) or Newf64(x, y) options, and
-almost never the Newf64() option.
+length xy, and capacity of 2xy.
 */
 func Newf64(dims ...int) *Matf64 {
 	m := &Matf64{}
@@ -99,7 +92,7 @@ func Newf64(dims ...int) *Matf64 {
 }
 
 /*
-FromData creates a mat object from a []float64 or a [][]float64 slice.
+Matf64FromData creates a mat object from a []float64 or a [][]float64 slice.
 This function is designed to do the "right thing" based on the type of
 the slice passed to it. The "right thing" based on each possible case
 is as follows:
@@ -107,14 +100,14 @@ is as follows:
 Assume that s is a [][]float64, and v is a []float64 for the examples
 below.
 
-	x := matrix.FromData(v)
+	x := matrix.Matf64FromData(v)
 
 In this case, x.Dims() is (1, len(v)), and the values in x are the same
 as the values in v. x is essentially a row vector.
 
 Alternatively, this function can be invoked as:
 
-	x := matrix.FromData(v, a)
+	x := matrix.Matf64FromData(v, a)
 
 In this case, x.Dims() is (a, 1), and the values in x are the same
 as the values in v. x is essentially a column vector. Note that a
@@ -123,23 +116,26 @@ must be equal to len(v).
 Finally for the case where the data is a []float64, the function can be
 invoked as:
 
-	x := matrix.FromData(v, a, b)
+	x := matrix.Matf64FromData(v, a, b)
 
 In this case, x.Dims() is (a, b), and the values in x are the same as
-the values in v. Note that a*b must be equal to len(v).
+the values in v. Note that a*b must be equal to len(v). Also note that
+this is equivalent to:
+
+    x := matrix.Matf64FromData(v).reshape(a,b)
 
 This function can also be invoked with data that is stored in a 2D
 slice ([][]float64). Just as the []float64 case, there are three
 possibilities:
 
-	x := matrix.FromData(s)
+	x := matrix.Matf64FromData(s)
 
 In this case, x.Dims() is (len(s), len(s[0])), and the values in x
 are the same as the values in s. It is assumed that s is not jagged.
 
 Another form to call this function with a 2D slice of data is:
 
-	x := matrix.FromData(s, a)
+	x := matrix.Matf64FromData(s, a)
 
 In this case, x.Dims() is (a, a), and the values in x are the same
 as the values in s. Note that the total number of elements in s
@@ -147,13 +143,13 @@ must be exactly a*a.
 
 Finally, this function can be called as:
 
-	x := matrix.FromData(s, a, b)
+	x := matrix.Matf64FromData(s, a, b)
 
 In this case, x.Dims() is (a, b), and the values in x are the same
 as the values in s. Note that the total number of elements in s
 must be exactly a*b. Also note that this is equivalent to:
 
-	x := matrix.FromData(s).Reshape(a, b)
+	x := matrix.Matf64FromData(s).Reshape(a, b)
 
 Choose the format that suits your needs, as there is no performance
 difference between the two forms.
@@ -167,7 +163,7 @@ func Matf64FromData(oneOrTwoDSlice interface{}, dims ...int) *Matf64 {
 	default:
 		s := "\nIn matrix.%s, expected input data of type []float64 or\n"
 		s += "[][]float64, However, data of type \"%v\" was received."
-		s = fmt.Sprintf(s, "FromData()", reflect.TypeOf(v))
+		s = fmt.Sprintf(s, "Matf64FromData()", reflect.TypeOf(v))
 		printErr(s)
 	}
 	return nil
@@ -184,7 +180,7 @@ func matf64FromOneDSliceHelper(v []float64, dims []int) *Matf64 {
 		if dims[0] != len(v) {
 			s := "\nIn matrix.%s, a 1D slice of data and a single int were passed.\n"
 			s += "However the int (%d) is not equal to the length of the data (%d)."
-			s = fmt.Sprintf(s, "FromData()", dims[0], len(v))
+			s = fmt.Sprintf(s, "Matf64FromData()", dims[0], len(v))
 			printHelperErr(s)
 		}
 		m.vals = make([]float64, dims[0], dims[0]*2)
@@ -195,7 +191,7 @@ func matf64FromOneDSliceHelper(v []float64, dims []int) *Matf64 {
 			s := "\nIn matrix.%s, a 1D slice of data and two ints were passed.\n"
 			s += "However, the product of the two ints (%d, %d) does not equal\n"
 			s += "the number of elements in the data slice, %d. They must be equal."
-			s = fmt.Sprintf(s, "FromData()", dims[0]*dims[1], len(v))
+			s = fmt.Sprintf(s, "Matf64FromData()", dims[0]*dims[1], len(v))
 			printHelperErr(s)
 		}
 		m.vals = make([]float64, dims[0]*dims[1], dims[0]*dims[1]*2)
@@ -206,7 +202,7 @@ func matf64FromOneDSliceHelper(v []float64, dims []int) *Matf64 {
 		s += "This function expects 0 to 2 integers. Please review the docs for\n"
 		s += "this function and adjust the number of integers based on the\n"
 		s += "desired output."
-		s = fmt.Sprintf(s, "FromData()", len(dims))
+		s = fmt.Sprintf(s, "Matf64FromData()", len(dims))
 		printHelperErr(s)
 	}
 	return m
@@ -231,7 +227,7 @@ func matf64FromTwoDSliceHelper(v [][]float64, dims []int) *Matf64 {
 			s += "Note that this function expects a non-jagged 2D slice, and\n"
 			s += "is assumed that every row in the passed 2D slice contains\n"
 			s += "%d elements."
-			s = fmt.Sprintf(s, "FromData()", dims[0], dims[0], dims[0], dims[0],
+			s = fmt.Sprintf(s, "Matf64FromData()", dims[0], dims[0], dims[0], dims[0],
 				len(v)*len(v[0]), len(v[0]))
 			printHelperErr(s)
 		}
@@ -248,7 +244,7 @@ func matf64FromTwoDSliceHelper(v [][]float64, dims []int) *Matf64 {
 			s += "However, the requested number of rows and columns (%d and %d)\n"
 			s += "of the resultant Matf64 does not match the length and width of\n"
 			s += "the data slice (%d and %d)."
-			s = fmt.Sprintf(s, "FromData()", dims[0], dims[1], len(v), len(v[0]))
+			s = fmt.Sprintf(s, "Matf64FromData()", dims[0], dims[1], len(v), len(v[0]))
 			printHelperErr(s)
 		}
 		m.vals = make([]float64, dims[0]*dims[1], dims[0]*dims[1]*2)
@@ -262,14 +258,14 @@ func matf64FromTwoDSliceHelper(v [][]float64, dims []int) *Matf64 {
 		s := "\nIn matrix.%s, a 2D slice of data and %d ints were passed.\n"
 		s += "However, this function expects 0 to 2 ints. Review the docs for\n"
 		s += "this function and adjust the number of integers passed accordingly."
-		s = fmt.Sprintf(s, "FromData()", len(dims))
+		s = fmt.Sprintf(s, "Matf64FromData()", len(dims))
 		printHelperErr(s)
 	} // switch len(dims) for case [][]float64
 	return m
 }
 
 /*
-FromCSV creates a mat object from a CSV (comma separated values) file. Here, we
+Matf64FromCSV creates a mat object from a CSV (comma separated values) file. Here, we
 assume that the number of rows of the resultant mat object is equal to the
 number of lines, and the number of columns is equal to the number of entries
 in each line. As before, we make sure that each line contains the same number
@@ -288,7 +284,7 @@ func Matf64FromCSV(filename string) *Matf64 {
 	f, err := os.Open(filename)
 	if err != nil {
 		s := "\nIn matrix.%s, cannot open %s due to error: %v.\n"
-		s = fmt.Sprintf(s, "FromCSV()", filename, err)
+		s = fmt.Sprintf(s, "Matf64FromCSV()", filename, err)
 		printErr(s)
 	}
 	defer f.Close()
@@ -301,7 +297,7 @@ func Matf64FromCSV(filename string) *Matf64 {
 	str, err := r.Read()
 	if err != nil {
 		s := "\nIn matrix.%s, cannot read from %s due to error: %v.\n"
-		s = fmt.Sprintf(s, "FromCSV()", filename, err)
+		s = fmt.Sprintf(s, "Matf64FromCSV()", filename, err)
 		printErr(s)
 	}
 	// Start with one row, and set the number of entries per row
@@ -314,7 +310,7 @@ func Matf64FromCSV(filename string) *Matf64 {
 			if err != nil {
 				s := "\nIn matrix.%s, item %d in line %d is %s, which cannot\n"
 				s += "be converted to a float64 due to: %v"
-				s = fmt.Sprintf(s, "FromCSV()", i, m.r, str[i], err)
+				s = fmt.Sprintf(s, "Matf64FromCSV()", i, m.r, str[i], err)
 				printErr(s)
 			}
 		}
@@ -326,7 +322,7 @@ func Matf64FromCSV(filename string) *Matf64 {
 				break
 			}
 			s := "\nIn matrix.%s, cannot read from %s due to error: %v.\n"
-			s = fmt.Sprintf(s, "FromCSV()", filename, err)
+			s = fmt.Sprintf(s, "Matf64FromCSV()", filename, err)
 			printErr(s)
 		}
 		m.r++
@@ -335,20 +331,20 @@ func Matf64FromCSV(filename string) *Matf64 {
 }
 
 /*
-Rand returns a Matf64 whose elements have random values. There are 3 ways to call
-Rand:
+RandMatf64 returns a Matf64 whose elements have random values. There are 3 ways to call
+RandMatf64:
 
-	m := matrix.Rand(2, 3)
+	m := matrix.RandMatf64(2, 3)
 
 With this call, m is a 2X3 Matf64 whose elements have values randomly selected from
 the range (0, 1], (includes 0, but excludes 1).
 
-	m := matrix.Rand(2, 3, x)
+	m := matrix.RandMatf64(2, 3, x)
 
 With this call, m is a 2X3 Matf64 whose elements have values randomly selected from
 the range (0, x], (includes 0, but excludes x).
 
-	m := matrix.Rand(2, 3, x, y)
+	m := matrix.RandMatf64(2, 3, x, y)
 
 With this call, m is a 2X3 Matf64 whose elements have values randomly selected from
 the range (x, y], (includes x, but excludes y). In this case, x must be strictly
@@ -373,7 +369,7 @@ func RandMatf64(r, c int, args ...float64) *Matf64 {
 			s := "\nIn matrix.%s the first argument, %f, is not less than the\n"
 			s += "second argument, %f. The first argument must be strictly\n"
 			s += "less than the second.\n"
-			s = fmt.Sprintf(s, "Rand()", from, to)
+			s = fmt.Sprintf(s, "RandMatf64()", from, to)
 			printErr(s)
 		}
 		for i := 0; i < m.r*m.c; i++ {
@@ -381,7 +377,7 @@ func RandMatf64(r, c int, args ...float64) *Matf64 {
 		}
 	default:
 		s := "\nIn matrix.%s expected 0 to 2 arguments, but received %d."
-		s = fmt.Sprintf(s, "Rand()", len(args))
+		s = fmt.Sprintf(s, "RandMatf64()", len(args))
 		printErr(s)
 	}
 	return m

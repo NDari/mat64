@@ -8,16 +8,16 @@ func TestFunctions(t *testing.T) {
 		m.vals[i] = float64(i * 2)
 	}
 	m.vals[0] = 2.0
-	if m.Any(Negative) {
+	if m.Any(Negativef64) {
 		t.Errorf("found negatives")
 	}
-	if !m.All(Positive) {
+	if !m.All(Positivef64) {
 		t.Errorf("Some are not positive")
 	}
-	if m.Any(Odd) {
+	if m.Any(Oddf64) {
 		t.Errorf("Some are odd")
 	}
-	if !m.All(Even) {
+	if !m.All(Evenf64) {
 		t.Errorf("Some are not even")
 	}
 }
