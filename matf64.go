@@ -871,6 +871,11 @@ respectively. This method creates a new mat object, and the original is
 left intact.
 */
 func (m *Matf64) T() *Matf64 {
+	if m.isRowVector() || m.isColVector() {
+		n := m.Copy()
+		n.r, n.c = n.c, n.r
+		return n
+	}
 	n := Newf64(m.c, m.r)
 	idx := 0
 	for i := 0; i < m.c; i++ {
@@ -880,6 +885,20 @@ func (m *Matf64) T() *Matf64 {
 		}
 	}
 	return n
+}
+
+func (m *Matf64) isRowVector() bool {
+	if m.r == 1 {
+		return true
+	}
+	return false
+}
+
+func (m *Matf64) isColVector() bool {
+	if m.c == 1 {
+		return true
+	}
+	return false
 }
 
 /*
