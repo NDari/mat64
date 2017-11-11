@@ -33,7 +33,6 @@ func TestNewf64(t *testing.T) {
 	assert.Equal(t, rows*cols, len(m.vals), "should be equal")
 	assert.Equal(t, 2*rows*cols, cap(m.vals), "should have twice the capacity")
 
-	assert.Panics(t, func() { Newf64(1, 2, 3) }, "should panic with 3+ args")
 	assert.Panics(t, func() { Newf64(1, 2, 3, 4) }, "should panic with 3+ args")
 }
 
@@ -736,15 +735,30 @@ func TestDot(t *testing.T) {
 	for i := 0; i < row*row; i++ {
 		assert.Equal(t, 0.0, q.vals[i], "should be zero")
 	}
+	bra := Newf64(3, 1).SetAll(2.0)
+	bra.SetAll(2.0)
+	ket := Newf64(1, 3).SetAll(3.0)
+	bracket := bra.Dot(ket)
+	v := bracket.Vals()
+	assert.Equal(t, 9, len(v))
+	for i := range v {
+		assert.Equal(t, 6.0, v[i])
+	}
+	bracket = ket.Dot(bra)
+	v = bracket.Vals()
+	assert.Equal(t, 1, len(v))
+	for i := range v {
+		assert.Equal(t, 18.0, v[i])
+	}
+
 }
 
 func BenchmarkDot(b *testing.B) {
-	row, col := 150, 130
-	m := Newf64(row, col)
+	m := Newf64(1000)
+	n := Newf64(1000)
 	for i := range m.vals {
-		m.vals[i] = float64(i)
+		m.vals[i] = float64(i + i)
 	}
-	n := Newf64(col, row)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}
