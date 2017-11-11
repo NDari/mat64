@@ -4,7 +4,7 @@ or list in other programming languages. Under the hood, the mat object is a
 flat slice, which provides for optimal performance in Go, while the methods
 and constructors provide for a higher level of performance and abstraction
 when compared to the "2D" slices of go (slices of slices). Due to it's internal
-representation, row or column vectors can also be easily created by the Matf64
+representation, row or column vectors can also be easily created by the Matf32
 object, without a performance hit, by setting the number of rows or columns to
 one.
 
@@ -17,21 +17,17 @@ to the full stack trace, in order to help fix the issue rapidly.
 package matrix
 
 import (
-	"encoding/csv"
 	"fmt"
-	"io"
 	"math"
 	"math/rand"
-	"os"
 	"reflect"
-	"strconv"
 
-	"github.com/chewxy/vecf64"
+	"github.com/chewxy/vecf32"
 )
 
 /*
-Matf64 is the main struct of this library. Matf64 is a essentially a 1D slice
-(a []float64) that contains two integers, representing rows and columns,
+Matf32 is the main struct of this library. Matf32 is a essentially a 1D slice
+(a []float32) that contains two integers, representing rows and columns,
 which allow it to behave as if it was a 2D slice. This allows for higher
 performance and flexibility for the users of this library, at the expense
 of some bookkeeping that is done here.
@@ -39,105 +35,105 @@ of some bookkeeping that is done here.
 The fields of this struct are not directly accessible, and they may only
 change by the use of the various methods in this library.
 */
-type Matf64 struct {
+type Matf32 struct {
 	r, c int
-	vals []float64
+	vals []float32
 }
 
 /*
-New is the primary constructor for the "Matf64" object. New is a variadic function,
+Newf32 is the primary constructor for the "Matf32" object. New is a variadic function,
 expecting 0 to 2 integers, with differing behavior as follows:
 
-	m := matrix.Newf64()
+	m := matrix.Newf32()
 
-m is now an empty &Matf64{}, where the number of rows,
+m is now an empty &Matf32{}, where the number of rows,
 columns and the length and capacity of the underlying
 slice are all zero. This is mostly for internal use.
 
-	m := matrix.Newf64(x)
+	m := matrix.Newf32(x)
 
 m is a x by x (square) matrix, with the underlying
 slice of length x, and capacity 2x.
 
-	m := matrix.Newf64(x, y)
+	m := matrix.Newf32(x, y)
 
 m is an x by y matrix, with the underlying slice of
 length xy, and capacity of 2xy.
 */
-func Newf64(dims ...int) *Matf64 {
-	m := &Matf64{}
+func Newf32(dims ...int) *Matf32 {
+	m := &Matf32{}
 	switch len(dims) {
 	case 0:
-		m = &Matf64{
+		m = &Matf32{
 			0,
 			0,
-			make([]float64, 0),
+			make([]float32, 0),
 		}
 	case 1:
-		m = &Matf64{
+		m = &Matf32{
 			dims[0],
 			dims[0],
-			make([]float64, dims[0]*dims[0], 2*dims[0]*dims[0]),
+			make([]float32, dims[0]*dims[0]),
 		}
 	case 2:
-		m = &Matf64{
+		m = &Matf32{
 			dims[0],
 			dims[1],
-			make([]float64, dims[0]*dims[1], 2*dims[0]*dims[1]),
+			make([]float32, dims[0]*dims[1]),
 		}
 	default:
 		s := "\nIn matrix.%s, expected 0 to 2 arguments, but received %d arguments."
-		s = fmt.Sprintf(s, "Newf64()", len(dims))
+		s = fmt.Sprintf(s, "Newf32()", len(dims))
 		printErr(s)
 	}
 	return m
 }
 
 /*
-Matf64FromData creates a mat object from a []float64 or a [][]float64 slice.
+Matf32FromData creates a mat object from a []float32 or a [][]float32 slice.
 This function is designed to do the "right thing" based on the type of
 the slice passed to it. The "right thing" based on each possible case
 is as follows:
 
-Assume that s is a [][]float64, and v is a []float64 for the examples
+Assume that s is a [][]float32, and v is a []float32 for the examples
 below.
 
-	x := matrix.Matf64FromData(v)
+	x := matrix.Matf32FromData(v)
 
 In this case, x.Dims() is (1, len(v)), and the values in x are the same
 as the values in v. x is essentially a row vector.
 
 Alternatively, this function can be invoked as:
 
-	x := matrix.Matf64FromData(v, a)
+	x := matrix.Matf32FromData(v, a)
 
 In this case, x.Dims() is (a, 1), and the values in x are the same
 as the values in v. x is essentially a column vector. Note that a
 must be equal to len(v).
 
-Finally for the case where the data is a []float64, the function can be
+Finally for the case where the data is a []float32, the function can be
 invoked as:
 
-	x := matrix.Matf64FromData(v, a, b)
+	x := matrix.Matf32FromData(v, a, b)
 
 In this case, x.Dims() is (a, b), and the values in x are the same as
 the values in v. Note that a*b must be equal to len(v). Also note that
 this is equivalent to:
 
-    x := matrix.Matf64FromData(v).reshape(a,b)
+    x := matrix.Matf32FromData(v).reshape(a,b)
 
 This function can also be invoked with data that is stored in a 2D
-slice ([][]float64). Just as the []float64 case, there are three
+slice ([][]float32). Just as the []float32 case, there are three
 possibilities:
 
-	x := matrix.Matf64FromData(s)
+	x := matrix.Matf32FromData(s)
 
 In this case, x.Dims() is (len(s), len(s[0])), and the values in x
 are the same as the values in s. It is assumed that s is not jagged.
 
 Another form to call this function with a 2D slice of data is:
 
-	x := matrix.Matf64FromData(s, a)
+	x := matrix.Matf32FromData(s, a)
 
 In this case, x.Dims() is (a, a), and the values in x are the same
 as the values in s. Note that the total number of elements in s
@@ -145,47 +141,47 @@ must be exactly a*a.
 
 Finally, this function can be called as:
 
-	x := matrix.Matf64FromData(s, a, b)
+	x := matrix.Matf32FromData(s, a, b)
 
 In this case, x.Dims() is (a, b), and the values in x are the same
 as the values in s. Note that the total number of elements in s
 must be exactly a*b. Also note that this is equivalent to:
 
-	x := matrix.Matf64FromData(s).Reshape(a, b)
+	x := matrix.Matf32FromData(s).Reshape(a, b)
 
 Choose the format that suits your needs, as there is no performance
 difference between the two forms.
 */
-func Matf64FromData(oneOrTwoDSlice interface{}, dims ...int) *Matf64 {
+func Matf32FromData(oneOrTwoDSlice interface{}, dims ...int) *Matf32 {
 	switch v := oneOrTwoDSlice.(type) {
-	case []float64:
-		return matf64FromOneDSliceHelper(v, dims)
-	case [][]float64:
-		return matf64FromTwoDSliceHelper(v, dims)
+	case []float32:
+		return matf32FromOneDSliceHelper(v, dims)
+	case [][]float32:
+		return matf32FromTwoDSliceHelper(v, dims)
 	default:
-		s := "\nIn matrix.%s, expected input data of type []float64 or\n"
-		s += "[][]float64, However, data of type \"%v\" was received."
-		s = fmt.Sprintf(s, "Matf64FromData()", reflect.TypeOf(v))
+		s := "\nIn matrix.%s, expected input data of type []float32 or\n"
+		s += "[][]float32, However, data of type \"%v\" was received."
+		s = fmt.Sprintf(s, "Matf32FromData()", reflect.TypeOf(v))
 		printErr(s)
 	}
 	return nil
 }
 
-func matf64FromOneDSliceHelper(v []float64, dims []int) *Matf64 {
-	m := Newf64()
+func matf32FromOneDSliceHelper(v []float32, dims []int) *Matf32 {
+	m := Newf32()
 	switch len(dims) {
 	case 0:
-		m.vals = make([]float64, len(v), len(v)*2)
+		m.vals = make([]float32, len(v), len(v)*2)
 		copy(m.vals, v)
 		m.r, m.c = 1, len(v)
 	case 1:
 		if dims[0] != len(v) {
 			s := "\nIn matrix.%s, a 1D slice of data and a single int were passed.\n"
 			s += "However the int (%d) is not equal to the length of the data (%d)."
-			s = fmt.Sprintf(s, "Matf64FromData()", dims[0], len(v))
+			s = fmt.Sprintf(s, "Matf32FromData()", dims[0], len(v))
 			printHelperErr(s)
 		}
-		m.vals = make([]float64, dims[0], dims[0]*2)
+		m.vals = make([]float32, dims[0], dims[0]*2)
 		copy(m.vals, v)
 		m.r, m.c = dims[0], 1
 	case 2:
@@ -193,10 +189,10 @@ func matf64FromOneDSliceHelper(v []float64, dims []int) *Matf64 {
 			s := "\nIn matrix.%s, a 1D slice of data and two ints were passed.\n"
 			s += "However, the product of the two ints (%d, %d) does not equal\n"
 			s += "the number of elements in the data slice, %d. They must be equal."
-			s = fmt.Sprintf(s, "Matf64FromData()", dims[0]*dims[1], len(v))
+			s = fmt.Sprintf(s, "Matf32FromData()", dims[0]*dims[1], len(v))
 			printHelperErr(s)
 		}
-		m.vals = make([]float64, dims[0]*dims[1], dims[0]*dims[1]*2)
+		m.vals = make([]float32, dims[0]*dims[1], dims[0]*dims[1]*2)
 		copy(m.vals, v)
 		m.r, m.c = dims[0], dims[1]
 	default:
@@ -204,17 +200,17 @@ func matf64FromOneDSliceHelper(v []float64, dims []int) *Matf64 {
 		s += "This function expects 0 to 2 integers. Please review the docs for\n"
 		s += "this function and adjust the number of integers based on the\n"
 		s += "desired output."
-		s = fmt.Sprintf(s, "Matf64FromData()", len(dims))
+		s = fmt.Sprintf(s, "Matf32FromData()", len(dims))
 		printHelperErr(s)
 	}
 	return m
 }
 
-func matf64FromTwoDSliceHelper(v [][]float64, dims []int) *Matf64 {
-	m := Newf64()
+func matf32FromTwoDSliceHelper(v [][]float32, dims []int) *Matf32 {
+	m := Newf32()
 	switch len(dims) {
 	case 0:
-		m.vals = make([]float64, len(v)*len(v[0]), len(v)*len(v[0])*2)
+		m.vals = make([]float32, len(v)*len(v[0]), len(v)*len(v[0])*2)
 		for i := range v {
 			for j := range v[i] {
 				m.vals[i*len(v[0])+j] = v[i][j]
@@ -224,16 +220,16 @@ func matf64FromTwoDSliceHelper(v [][]float64, dims []int) *Matf64 {
 	case 1:
 		if dims[0]*dims[0] != len(v)*len(v[0]) {
 			s := "\nIn matrix.%s, a 2D slice of data and 1 int were passed.\n"
-			s += "This would generate a %d by %d Matf64. However, %d*%d does not\n"
+			s += "This would generate a %d by %d Matf32. However, %d*%d does not\n"
 			s += "equal the number of elements in the passed 2D slice, %d.\n"
 			s += "Note that this function expects a non-jagged 2D slice, and\n"
 			s += "is assumed that every row in the passed 2D slice contains\n"
 			s += "%d elements."
-			s = fmt.Sprintf(s, "Matf64FromData()", dims[0], dims[0], dims[0], dims[0],
+			s = fmt.Sprintf(s, "Matf32FromData()", dims[0], dims[0], dims[0], dims[0],
 				len(v)*len(v[0]), len(v[0]))
 			printHelperErr(s)
 		}
-		m.vals = make([]float64, dims[0]*dims[0], dims[0]*dims[0]*2)
+		m.vals = make([]float32, dims[0]*dims[0], dims[0]*dims[0]*2)
 		for i := range v {
 			for j := range v[i] {
 				m.vals[i*len(v[0])+j] = v[i][j]
@@ -244,12 +240,12 @@ func matf64FromTwoDSliceHelper(v [][]float64, dims []int) *Matf64 {
 		if dims[0] != len(v) || dims[1] != len(v[0]) {
 			s := "\nIn matrix.%s, a 2D slice of data and 2 ints were passed.\n"
 			s += "However, the requested number of rows and columns (%d and %d)\n"
-			s += "of the resultant Matf64 does not match the length and width of\n"
+			s += "of the resultant Matf32 does not match the length and width of\n"
 			s += "the data slice (%d and %d)."
-			s = fmt.Sprintf(s, "Matf64FromData()", dims[0], dims[1], len(v), len(v[0]))
+			s = fmt.Sprintf(s, "Matf32FromData()", dims[0], dims[1], len(v), len(v[0]))
 			printHelperErr(s)
 		}
-		m.vals = make([]float64, dims[0]*dims[1], dims[0]*dims[1]*2)
+		m.vals = make([]float32, dims[0]*dims[1], dims[0]*dims[1]*2)
 		for i := range v {
 			for j := range v[i] {
 				m.vals[i*len(v[0])+j] = v[i][j]
@@ -260,109 +256,43 @@ func matf64FromTwoDSliceHelper(v [][]float64, dims []int) *Matf64 {
 		s := "\nIn matrix.%s, a 2D slice of data and %d ints were passed.\n"
 		s += "However, this function expects 0 to 2 ints. Review the docs for\n"
 		s += "this function and adjust the number of integers passed accordingly."
-		s = fmt.Sprintf(s, "Matf64FromData()", len(dims))
+		s = fmt.Sprintf(s, "Matf32FromData()", len(dims))
 		printHelperErr(s)
-	} // switch len(dims) for case [][]float64
+	} // switch len(dims) for case [][]float32
 	return m
 }
 
 /*
-Matf64FromCSV creates a mat object from a CSV (comma separated values) file. Here, we
-assume that the number of rows of the resultant mat object is equal to the
-number of lines, and the number of columns is equal to the number of entries
-in each line. As before, we make sure that each line contains the same number
-of elements.
+RandMatf32 returns a Matf32 whose elements have random values. There are 3 ways to call
+RandMatf32:
 
-The file to be read is assumed to be very large, and hence it is read one line
-at a time. This results in some major inefficiencies, and it is recommended
-that this function be used sparingly, and not as a major component of your
-library/executable.
+	m := matrix.RandMatf32(2, 3)
 
-Unlike other mat creation functions in this package, the capacity of the mat
-object created here is the same as its length since we assume the mat to
-be very large.
-*/
-func Matf64FromCSV(filename string) *Matf64 {
-	f, err := os.Open(filename)
-	if err != nil {
-		s := "\nIn matrix.%s, cannot open %s due to error: %v.\n"
-		s = fmt.Sprintf(s, "Matf64FromCSV()", filename, err)
-		printErr(s)
-	}
-	defer f.Close()
-	r := csv.NewReader(f)
-	// I am going with the assumption that a mat loaded from a CSV is going to
-	// be large. So, we are going to read one line, and determine the number
-	// of columns based on the number of comma separated entries in that line.
-	// Then we will read the rest of the lines one at a time, checking that the
-	// number of entries in each line is the same as the first line.
-	str, err := r.Read()
-	if err != nil {
-		s := "\nIn matrix.%s, cannot read from %s due to error: %v.\n"
-		s = fmt.Sprintf(s, "Matf64FromCSV()", filename, err)
-		printErr(s)
-	}
-	// Start with one row, and set the number of entries per row
-	m := Newf64()
-	m.r, m.c = 1, len(str)
-	row := make([]float64, len(str))
-	for {
-		for i := range str {
-			row[i], err = strconv.ParseFloat(str[i], 64)
-			if err != nil {
-				s := "\nIn matrix.%s, item %d in line %d is %s, which cannot\n"
-				s += "be converted to a float64 due to: %v"
-				s = fmt.Sprintf(s, "Matf64FromCSV()", i, m.r, str[i], err)
-				printErr(s)
-			}
-		}
-		m.vals = append(m.vals, row...)
-		// Read the next line. If there is one, increment the number of rows
-		str, err = r.Read()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			s := "\nIn matrix.%s, cannot read from %s due to error: %v.\n"
-			s = fmt.Sprintf(s, "Matf64FromCSV()", filename, err)
-			printErr(s)
-		}
-		m.r++
-	}
-	return m
-}
-
-/*
-RandMatf64 returns a Matf64 whose elements have random values. There are 3 ways to call
-RandMatf64:
-
-	m := matrix.RandMatf64(2, 3)
-
-With this call, m is a 2X3 Matf64 whose elements have values randomly selected from
+With this call, m is a 2X3 Matf32 whose elements have values randomly selected from
 the range (0, 1], (includes 0, but excludes 1).
 
-	m := matrix.RandMatf64(2, 3, x)
+	m := matrix.RandMatf32(2, 3, x)
 
-With this call, m is a 2X3 Matf64 whose elements have values randomly selected from
+With this call, m is a 2X3 Matf32 whose elements have values randomly selected from
 the range (0, x], (includes 0, but excludes x).
 
-	m := matrix.RandMatf64(2, 3, x, y)
+	m := matrix.RandMatf32(2, 3, x, y)
 
-With this call, m is a 2X3 Matf64 whose elements have values randomly selected from
+With this call, m is a 2X3 Matf32 whose elements have values randomly selected from
 the range (x, y], (includes x, but excludes y). In this case, x must be strictly
 less than y.
 */
-func RandMatf64(r, c int, args ...float64) *Matf64 {
-	m := Newf64(r, c)
+func RandMatf32(r, c int, args ...float32) *Matf32 {
+	m := Newf32(r, c)
 	switch len(args) {
 	case 0:
 		for i := 0; i < m.r*m.c; i++ {
-			m.vals[i] = rand.Float64()
+			m.vals[i] = rand.Float32()
 		}
 	case 1:
 		to := args[0]
 		for i := 0; i < m.r*m.c; i++ {
-			m.vals[i] = rand.Float64() * to
+			m.vals[i] = rand.Float32() * to
 		}
 	case 2:
 		from := args[0]
@@ -371,15 +301,15 @@ func RandMatf64(r, c int, args ...float64) *Matf64 {
 			s := "\nIn matrix.%s the first argument, %f, is not less than the\n"
 			s += "second argument, %f. The first argument must be strictly\n"
 			s += "less than the second.\n"
-			s = fmt.Sprintf(s, "RandMatf64()", from, to)
+			s = fmt.Sprintf(s, "RandMatf32()", from, to)
 			printErr(s)
 		}
 		for i := 0; i < m.r*m.c; i++ {
-			m.vals[i] = rand.Float64()*(to-from) + from
+			m.vals[i] = rand.Float32()*(to-from) + from
 		}
 	default:
 		s := "\nIn matrix.%s expected 0 to 2 arguments, but received %d."
-		s = fmt.Sprintf(s, "RandMatf64()", len(args))
+		s = fmt.Sprintf(s, "RandMatf32()", len(args))
 		printErr(s)
 	}
 	return m
@@ -390,10 +320,10 @@ Reshape changes the row and the columns of the mat object as long as the total
 number of values contained in the mat object remains constant. The order and
 the values of the mat does not change with this function.
 */
-func (m *Matf64) Reshape(rows, cols int) *Matf64 {
+func (m *Matf32) Reshape(rows, cols int) *Matf32 {
 	if rows*cols != m.r*m.c {
-		s := "\nIn matrix.%s, The total number of entries of the old and new shape\n"
-		s += "must match. The Old Matf64 had a shape of row = %d, col = %d,\n"
+		s := "\nIn %s, The total number of entries of the old and new shape\n"
+		s += "must match. The Old Matf32 had a shape of row = %d, col = %d,\n"
 		s += "which is not equal to the requested shape of row, col = %d, %d\n"
 		s = fmt.Sprintf(s, "Reshape()", m.r, m.c, rows, cols)
 		printErr(s)
@@ -407,26 +337,26 @@ func (m *Matf64) Reshape(rows, cols int) *Matf64 {
 /*
 Shape returns the number of rows and columns of a mat object.
 */
-func (m *Matf64) Shape() (int, int) {
+func (m *Matf32) Shape() (int, int) {
 	return m.r, m.c
 }
 
 /*
-Vals returns the values contained in a mat object as a 1D slice of float64s.
+Vals returns the values contained in a mat object as a 1D slice of float32s.
 */
-func (m *Matf64) Vals() []float64 {
-	s := make([]float64, len(m.vals))
+func (m *Matf32) Vals() []float32 {
+	s := make([]float32, len(m.vals))
 	copy(s, m.vals)
 	return s
 }
 
 /*
-ToSlice returns the values of a mat object as a 2D slice of float64s.
+ToSlice returns the values of a mat object as a 2D slice of float32s.
 */
-func (m *Matf64) ToSlice() [][]float64 {
-	s := make([][]float64, m.r)
+func (m *Matf32) ToSlice() [][]float32 {
+	s := make([][]float32, m.r)
 	for i := range s {
-		s[i] = make([]float64, m.c)
+		s[i] = make([]float32, m.c)
 		for j := range s[i] {
 			s[i][j] = m.vals[i*m.c+j]
 		}
@@ -435,44 +365,9 @@ func (m *Matf64) ToSlice() [][]float64 {
 }
 
 /*
-ToCSV creates a file with the passed name, and writes the content of a mat
-object to it, by putting each row in a single comma separated line. The
-number of entries in each line is equal to the columns of the mat object.
+Get returns a pointer to the float32 stored in the given row and column.
 */
-func (m *Matf64) ToCSV(fileName string) {
-	f, err := os.Create(fileName)
-	if err != nil {
-		s := "\nIn matrix.%s, cannot open %s due to error: %v.\n"
-		s = fmt.Sprintf(s, "ToCSV()", fileName, err)
-		printErr(s)
-	}
-	defer f.Close()
-	str := ""
-	idx := 0
-	for i := 0; i < m.r; i++ {
-		for j := 0; j < m.c; j++ {
-			str += strconv.FormatFloat(m.vals[idx], 'e', 14, 64)
-			if j+1 != m.c {
-				str += ","
-			}
-			idx++
-		}
-		if i+1 != m.r {
-			str += "\n"
-		}
-	}
-	_, err = f.Write([]byte(str))
-	if err != nil {
-		s := "\nIn matrix.%s, cannot write to %s due to error: %v.\n"
-		s = fmt.Sprintf(s, "ToCSV()", fileName, err)
-		printErr(s)
-	}
-}
-
-/*
-Get returns a pointer to the float64 stored in the given row and column.
-*/
-func (m *Matf64) Get(r, c int) float64 {
+func (m *Matf32) Get(r, c int) float32 {
 	return m.vals[r*m.c+c]
 }
 
@@ -480,32 +375,33 @@ func (m *Matf64) Get(r, c int) float64 {
 Set sets the value of a mat at a given row and column to a given
 value.
 */
-func (m *Matf64) Set(r, c int, val float64) *Matf64 {
+func (m *Matf32) Set(r, c int, val float32) *Matf32 {
 	m.vals[r*m.c+c] = val
 	return m
 }
 
 /*
-SetAll sets all values of a mat to the passed float64 value.
+SetAll sets all values of a mat to the passed float32 value.
 */
-func (m *Matf64) SetAll(val float64) *Matf64 {
+func (m *Matf32) SetAll(val float64) *Matf32 {
+	val32 := float32(val)
 	for i := range m.vals {
-		m.vals[i] = val
+		m.vals[i] = val32
 	}
 	return m
 }
 
 /*
 Map applies a given function to each element of a mat object. The given
-function must take a pointer to a float64, and return nothing. For eaxmple,
-lets say that we wish to take the error function of each element of a Matf64. The
+function must take a pointer to a float32, and return nothing. For eaxmple,
+lets say that we wish to take the error function of each element of a Matf32. The
 following would do this:
 
-	m.Map(func(i *float64) {
+	m.Map(func(i *float32) {
 		*i = math.Erf(*i)
 	})
 */
-func (m *Matf64) Map(f func(*float64)) *Matf64 {
+func (m *Matf32) Map(f func(*float32)) *Matf32 {
 	for i := range m.vals {
 		f(&m.vals[i])
 	}
@@ -519,35 +415,36 @@ index values are allowed. For  example:
 	m.SetCol(-1, 2.0)
 
 sets all values of m's last column to 2.0. It is also possible to pass a slice
-of float64 to this function, all the elements of the chosen column will be
+of float32 to this function, all the elements of the chosen column will be
 set to the corresponding values in the slice. For example:
 
-	m := Newf64(2, 2).SetCol(0, []float64{1.0, 2.0})
+	m := Newf32(2, 2).SetCol(0, []float32{1.0, 2.0})
 
 sets to values in the first column of m to 1.0 and 2.0 respectively. Note that
 in this case, the length of the passed slice must match exactly the number of
 elements in m's column, i.e. the number of rows of m.
 */
-func (m *Matf64) SetCol(col int, floatOrSlice interface{}) *Matf64 {
+func (m *Matf32) SetCol(col int, floatOrSlice interface{}) *Matf32 {
 	switch val := floatOrSlice.(type) {
 	case float64:
 		if (col >= m.c) || (col < -m.c) {
-			s := "\nIn matrix.%s the requested column %d is outside of bounds [%d, %d)\n"
+			s := "\nIn %s the requested column %d is outside of bounds [%d, %d)\n"
 			s = fmt.Sprintf(s, "SetCol()", col, m.c, m.c)
 			printErr(s)
 		}
+		val32 := float32(val)
 		if col >= 0 {
 			for r := 0; r < m.r; r++ {
-				m.vals[r*m.c+col] = val
+				m.vals[r*m.c+col] = val32
 			}
 		} else {
 			for r := 0; r < m.r; r++ {
-				m.vals[r*m.c+(m.c+col)] = val
+				m.vals[r*m.c+(m.c+col)] = val32
 			}
 		}
-	case []float64:
+	case []float32:
 		if len(val) != m.r {
-			s := "\nIn matrix.%s the length of the passed slice is %d, which does\n"
+			s := "\nIn %s the length of the passed slice is %d, which does\n"
 			s += "not match the number of rows in the receiver, %d."
 			s = fmt.Sprintf(s, "SetCol()", len(val), m.r)
 			printErr(s)
@@ -562,7 +459,7 @@ func (m *Matf64) SetCol(col int, floatOrSlice interface{}) *Matf64 {
 			}
 		}
 	default:
-		s := "\nIn matrix.%s, the passed value must be a float64 or []float64.\n"
+		s := "\nIn %s, the passed value must be a float32 or []float32.\n"
 		s += "However, value of type  %v was received.\n"
 		s = fmt.Sprintf(s, "SetCol()", reflect.TypeOf(val))
 		printErr(s)
@@ -577,35 +474,36 @@ index values are allowed. For  example:
 	m.SetRow(-1, 2.0)
 
 sets all values of m's last row to 2.0. It is also possible to pass a slice
-of float64 to this function, all the elements of the chosen row will be
+of float32 to this function, all the elements of the chosen row will be
 set to the corresponding values in the slice. For example:
 
-	m := Newf64(2, 2).SetRow(0, []float64{1.0, 2.0})
+	m := Newf32(2, 2).SetRow(0, []float32{1.0, 2.0})
 
 sets to values in the first row of m to 1.0 and 2.0 respectively. Note that
 in this case, the length of the passed slice must match exactly the number of
 elements in m's row, i.e. the number of cols of m.
 */
-func (m *Matf64) SetRow(row int, floatOrSlice interface{}) *Matf64 {
+func (m *Matf32) SetRow(row int, floatOrSlice interface{}) *Matf32 {
 	switch val := floatOrSlice.(type) {
 	case float64:
 		if (row >= m.r) || (row < -m.r) {
-			s := "\nIn matrix.%s, row %d is outside of the bounds [-%d, %d)\n"
+			s := "\nIn %s, row %d is outside of the bounds [-%d, %d)\n"
 			s = fmt.Sprintf(s, "SetRow()", row, m.r, m.r)
 			printErr(s)
 		}
+		val32 := float32(val)
 		if row >= 0 {
 			for r := 0; r < m.c; r++ {
-				m.vals[row*m.c+r] = val
+				m.vals[row*m.c+r] = val32
 			}
 		} else {
 			for r := 0; r < m.c; r++ {
-				m.vals[(m.r+row)*m.c+r] = val
+				m.vals[(m.r+row)*m.c+r] = val32
 			}
 		}
-	case []float64:
+	case []float32:
 		if len(val) != m.c {
-			s := "\nIn matrix.%s the length of the passed slice is %d, which does\n"
+			s := "\nIn %s the length of the passed slice is %d, which does\n"
 			s += "not match the number of columns in the receiver, %d."
 			s = fmt.Sprintf(s, "SetRow()", len(val), m.c)
 			printErr(s)
@@ -620,7 +518,7 @@ func (m *Matf64) SetRow(row int, floatOrSlice interface{}) *Matf64 {
 			}
 		}
 	default:
-		s := "\nIn matrix.%s, the passed value must be a float64 or []float64.\n"
+		s := "\nIn %s, the passed value must be a float32 or []float32.\n"
 		s += "However, value of type  %v was received.\n"
 		s = fmt.Sprintf(s, "SetRow()", reflect.TypeOf(val))
 		printErr(s)
@@ -639,13 +537,13 @@ This function supports negative indexing. For example,
 
 returns the last column of m.
 */
-func (m *Matf64) Col(x int) *Matf64 {
+func (m *Matf32) Col(x int) *Matf32 {
 	if (x >= m.c) || (x < -m.c) {
-		s := "\nIn matrix.%s the requested column %d is outside of bounds [-%d, %d)\n"
+		s := "\nIn %s the requested column %d is outside of bounds [-%d, %d)\n"
 		s = fmt.Sprintf(s, "Col()", x, m.c, m.c)
 		printErr(s)
 	}
-	v := Newf64(m.r, 1)
+	v := Newf32(m.r, 1)
 	if x >= 0 {
 		for r := 0; r < m.r; r++ {
 			v.vals[r] = m.vals[r*m.c+x]
@@ -669,13 +567,13 @@ This function supports negative indexing. For example,
 
 returns the last row of m.
 */
-func (m *Matf64) Row(x int) *Matf64 {
+func (m *Matf32) Row(x int) *Matf32 {
 	if (x >= m.r) || (x < -m.r) {
-		s := "\nIn matrix.%s, row %d is outside of the bounds [-%d, %d)\n"
+		s := "\nIn %s, row %d is outside of the bounds [-%d, %d)\n"
 		s = fmt.Sprintf(s, "Row()", x, m.r, m.r)
 		printErr(s)
 	}
-	v := Newf64(1, m.c)
+	v := Newf32(1, m.c)
 	if x >= 0 {
 		for r := 0; r < m.c; r++ {
 			v.vals[r] = m.vals[x*m.c+r]
@@ -689,12 +587,12 @@ func (m *Matf64) Row(x int) *Matf64 {
 }
 
 /*
-Min returns the index and the value of the smallest float64 in a Matf64. This
+Min returns the index and the value of the smallest float32 in a Matf32. This
 method can be called in one of two ways:
 
 	idx, val := m.Min()
 
-will return the index, and value of the smallest float64 in m. We can also
+will return the index, and value of the smallest float32 in m. We can also
 specify the exact row and column for which we want the minimum index and
 values:
 
@@ -705,10 +603,9 @@ Note that negative index values are not supported at this time. Also note that
 in the case where multiple values are the maximum, the index of the first
 encountered value is returned.
 */
-func (m *Matf64) Min(args ...int) (index int, minVal float64) {
+func (m *Matf32) Min(args ...int) (index int, minVal float32) {
 	switch len(args) {
 	case 0:
-		index = 0
 		minVal = m.vals[0]
 		for i := 1; i < len(m.vals); i++ {
 			if m.vals[i] < minVal {
@@ -721,11 +618,10 @@ func (m *Matf64) Min(args ...int) (index int, minVal float64) {
 		switch axis {
 		case 0:
 			if (slice >= m.r) || (slice < 0) {
-				s := "\nIn matrix.%s the row %d is outside of bounds [0, %d)\n"
+				s := "\nIn %s the row %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Min()", slice, m.r)
 				printErr(s)
 			}
-			index = 0
 			minVal = m.vals[slice*m.c]
 			for i := 1; i < m.c; i++ {
 				if m.vals[slice*m.c+i] < minVal {
@@ -735,11 +631,10 @@ func (m *Matf64) Min(args ...int) (index int, minVal float64) {
 			}
 		case 1:
 			if (slice >= m.c) || (slice < 0) {
-				s := "\nIn matrix.%s the column %d is outside of bounds [0, %d)\n"
+				s := "\nIn %s the column %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Min()", slice, m.c)
 				printErr(s)
 			}
-			index = 0
 			minVal = m.vals[slice]
 			for i := 1; i < m.r; i++ {
 				if m.vals[i*m.c+slice] < minVal {
@@ -748,26 +643,26 @@ func (m *Matf64) Min(args ...int) (index int, minVal float64) {
 				}
 			}
 		default:
-			s := "\nIn matrix.%s, the first argument must be 0 or 1, however %d "
+			s := "\nIn %s, the first argument must be 0 or 1, however %d "
 			s += "was received.\n"
 			s = fmt.Sprintf(s, "Min()", axis)
 			printErr(s)
 		} // Switch on axis
 	default:
-		s := "\nIn matrix.%s, 0 or 2 arguments expected, but %d was received.\n"
+		s := "\nIn %s, 0 or 2 arguments expected, but %d was received.\n"
 		s = fmt.Sprintf(s, "Min()", len(args))
 		printErr(s)
 	} // switch on len(args)
-	return index, minVal
+	return
 }
 
 /*
-Max returns the index and the value of the biggest float64 in a Matf64. This
+Max returns the index and the value of the biggest float32 in a Matf32. This
 method can be called in one of two ways:
 
 	idx, val := m.Max()
 
-will return the index, and value of the biggest float64 in m. We can also
+will return the index, and value of the biggest float32 in m. We can also
 specify the exact row and column for which we want the minimum index and
 values:
 
@@ -778,10 +673,9 @@ Note that negative index values are not supported at this time. Also note that
 in the case where multiple values are the maximum, the index of the first
 encountered value is returned.
 */
-func (m *Matf64) Max(args ...int) (index int, maxVal float64) {
+func (m *Matf32) Max(args ...int) (index int, maxVal float32) {
 	switch len(args) {
 	case 0:
-		index = 0
 		maxVal = m.vals[0]
 		for i := 1; i < len(m.vals); i++ {
 			if m.vals[i] > maxVal {
@@ -794,11 +688,10 @@ func (m *Matf64) Max(args ...int) (index int, maxVal float64) {
 		switch axis {
 		case 0:
 			if (slice >= m.r) || (slice < 0) {
-				s := "\nIn matrix.%s the row %d is outside of bounds [0, %d)\n"
+				s := "\nIn %s the row %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Max()", slice, m.r)
 				printErr(s)
 			}
-			index = 0
 			maxVal = m.vals[slice*m.c]
 			for i := 1; i < m.c; i++ {
 				if m.vals[slice*m.c+i] > maxVal {
@@ -808,11 +701,10 @@ func (m *Matf64) Max(args ...int) (index int, maxVal float64) {
 			}
 		case 1:
 			if (slice >= m.c) || (slice < 0) {
-				s := "\nIn matrix.%s the column %d is outside of bounds [0, %d)\n"
+				s := "\nIn %s the column %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Max()", slice, m.c)
 				printErr(s)
 			}
-			index = 0
 			maxVal = m.vals[slice]
 			for i := 1; i < m.r; i++ {
 				if m.vals[i*m.c+slice] > maxVal {
@@ -821,25 +713,25 @@ func (m *Matf64) Max(args ...int) (index int, maxVal float64) {
 				}
 			}
 		default:
-			s := "\nIn matrix.%s, the first argument must be 0 or 1, however %d "
+			s := "\nIn %s, the first argument must be 0 or 1, however %d "
 			s += "was received.\n"
 			s = fmt.Sprintf(s, "Max()", axis)
 			printErr(s)
 		} // Switch on axis
 	default:
-		s := "\nIn matrix.%s, 0 or 2 arguments expected, but %d was received.\n"
+		s := "\nIn %s, 0 or 2 arguments expected, but %d was received.\n"
 		s = fmt.Sprintf(s, "Max()", len(args))
 		printErr(s)
 	} // switch on len(args)
-	return index, maxVal
+	return
 }
 
 /*
 Equals checks to see if two mat objects are equal. That mean that the two mats
-have the same number of rows, same number of columns, and have the same float64
+have the same number of rows, same number of columns, and have the same float32
 in each entry at a given index.
 */
-func (m *Matf64) Equals(n *Matf64) bool {
+func (m *Matf32) Equals(n *Matf32) bool {
 	if m.r != n.r {
 		return false
 	}
@@ -858,8 +750,8 @@ func (m *Matf64) Equals(n *Matf64) bool {
 Copy returns a duplicate of a mat object. The returned copy is "deep", meaning
 that the object can be manipulated without effecting the original mat object.
 */
-func (m *Matf64) Copy() *Matf64 {
-	n := Newf64(m.r, m.c)
+func (m *Matf32) Copy() *Matf32 {
+	n := Newf32(m.r, m.c)
 	copy(n.vals, m.vals)
 	return n
 }
@@ -872,13 +764,13 @@ mat are equal to the number of columns and rows of the original matrix,
 respectively. This method creates a new mat object, and the original is
 left intact.
 */
-func (m *Matf64) T() *Matf64 {
+func (m *Matf32) T() *Matf32 {
 	if m.isRowVector() || m.isColVector() {
 		n := m.Copy()
 		n.r, n.c = n.c, n.r
 		return n
 	}
-	n := Newf64(m.c, m.r)
+	n := Newf32(m.c, m.r)
 	idx := 0
 	for i := 0; i < m.c; i++ {
 		for j := 0; j < m.r; j++ {
@@ -889,14 +781,14 @@ func (m *Matf64) T() *Matf64 {
 	return n
 }
 
-func (m *Matf64) isRowVector() bool {
+func (m *Matf32) isRowVector() bool {
 	if m.r == 1 {
 		return true
 	}
 	return false
 }
 
-func (m *Matf64) isColVector() bool {
+func (m *Matf32) isColVector() bool {
 	if m.c == 1 {
 		return true
 	}
@@ -911,7 +803,7 @@ For instance, consider
 
 will return true if and only if all elements in m are positive.
 */
-func (m *Matf64) All(f func(*float64) bool) bool {
+func (m *Matf32) All(f func(*float32) bool) bool {
 	for i := range m.vals {
 		if !f(&m.vals[i]) {
 			return false
@@ -928,7 +820,7 @@ For instance,
 
 would be true if at least one element of the mat object is positive.
 */
-func (m *Matf64) Any(f func(*float64) bool) bool {
+func (m *Matf32) Any(f func(*float32) bool) bool {
 	for i := range m.vals {
 		if f(&m.vals[i]) {
 			return true
@@ -942,17 +834,17 @@ Mul carries the multiplication operation between each element of the receiver
 and an object passed to it. Based on the type of the passed object, the results
 of this method changes:
 
-If the passed object is a float64, then each element is multiplied by it:
+If the passed object is a float32, then each element is multiplied by it:
 
-	m := matrix.Newf64(2, 3).SetAll(5.0)
+	m := matrix.Newf32(2, 3).SetAll(5.0)
 	m.Mul(2.0)
 
 This will result in all values of m being 10.0.
-The passed Object can also be a Matf64, in which case each element of the receiver
-are multiplied by the corresponding element of the passed Matf64. Note that the
-passed Matf64 must have the same shape as the receiver.
+The passed Object can also be a Matf32, in which case each element of the receiver
+are multiplied by the corresponding element of the passed Matf32. Note that the
+passed Matf32 must have the same shape as the receiver.
 
-	m := matrix.Newf64(2, 3).SetAll(10.0)
+	m := matrix.Newf32(2, 3).SetAll(10.0)
 	n := m.Copy()
 	m.Mul(n)
 
@@ -960,30 +852,31 @@ This will result in each element of m being 100.0.
 
 Note: For the matrix cross product see the Dot() method.
 */
-func (m *Matf64) Mul(float64OrMatf64 interface{}) *Matf64 {
-	switch v := float64OrMatf64.(type) {
+func (m *Matf32) Mul(float64OrMatf32 interface{}) *Matf32 {
+	switch v := float64OrMatf32.(type) {
 	case float64:
+		v32 := float32(v)
 		for i := range m.vals {
-			m.vals[i] *= v
+			m.vals[i] *= v32
 		}
-	case *Matf64:
+	case *Matf32:
 		if v.r != m.r {
-			s := "\nIn matrix.%s, the number of the rows of the receiver is %d\n"
+			s := "\nIn %s, the number of the rows of the receiver is %d\n"
 			s += "but the number of rows of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Mul()", m.r, v.r)
 			printErr(s)
 		}
 		if v.c != m.c {
-			s := "\nIn matrix.%s, the number of the columns of the receiver is %d\n"
+			s := "\nIn %s, the number of the columns of the receiver is %d\n"
 			s += "but the number of columns of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Mul()", m.c, v.c)
 			printErr(s)
 		}
-		vecf64.Mul(m.vals, v.vals)
+		vecf32.Mul(m.vals, v.vals)
 	default:
-		s := "\nIn matrix.%s, the passed value must be a float64 or *Matf64.\n"
+		s := "\nIn %s, the passed value must be a float32 or *Matf32.\n"
 		s += "However, value of type  \"%v\" was received.\n"
 		s = fmt.Sprintf(s, "Mul()", reflect.TypeOf(v))
 		printErr(s)
@@ -996,46 +889,47 @@ Add carries the addition operation between each element of the receiver
 and an object passed to it. Based on the type of the passed object, the results
 of this method changes:
 
-If the passed object is a float64, then it is added to each element:
+If the passed object is a float32, then it is added to each element:
 
-	m := matrix.Newf64(2, 3).SetAll(5.0)
+	m := matrix.Newf32(2, 3).SetAll(5.0)
 	m.Add(2.0)
 
 This will result in all values of m being 7.0.
-The passed Object can also be a Matf64, in which case each element of the element
-of the passed Matf64 is added to the corresponding element of the receiver. Note
-that the passed Matf64 must have the same shape as the receiver.
+The passed Object can also be a Matf32, in which case each element of the element
+of the passed Matf32 is added to the corresponding element of the receiver. Note
+that the passed Matf32 must have the same shape as the receiver.
 
-	m := matrix.Newf64(2, 3).SetAll(10.0)
+	m := matrix.Newf32(2, 3).SetAll(10.0)
 	n := m.Copy()
 	m.Add(n)
 
 This will result in each element of m being 20.0.
 */
-func (m *Matf64) Add(float64OrMatf64 interface{}) *Matf64 {
-	switch v := float64OrMatf64.(type) {
+func (m *Matf32) Add(float64OrMatf32 interface{}) *Matf32 {
+	switch v := float64OrMatf32.(type) {
 	case float64:
+		v32 := float32(v)
 		for i := range m.vals {
-			m.vals[i] += v
+			m.vals[i] += v32
 		}
-	case *Matf64:
+	case *Matf32:
 		if v.r != m.r {
-			s := "\nIn matrix.%s, the number of the rows of the receiver is %d\n"
+			s := "\nIn %s, the number of the rows of the receiver is %d\n"
 			s += "but the number of rows of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Add()", m.r, v.r)
 			printErr(s)
 		}
 		if v.c != m.c {
-			s := "\nIn matrix.%s, the number of the columns of the receiver is %d\n"
+			s := "\nIn %s, the number of the columns of the receiver is %d\n"
 			s += "but the number of columns of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Add()", m.c, v.c)
 			printErr(s)
 		}
-		vecf64.Add(m.vals, v.vals)
+		vecf32.Add(m.vals, v.vals)
 	default:
-		s := "\nIn matrix.%s, the passed value must be a float64 or *Matf64.\n"
+		s := "\nIn %s, the passed value must be a float32 or *Matf32.\n"
 		s += "However, value of type  \"%v\" was received.\n"
 		s = fmt.Sprintf(s, "Add()", reflect.TypeOf(v))
 		printErr(s)
@@ -1048,46 +942,47 @@ Sub carries the subtraction operation between each element of the receiver
 and an object passed to it. Based on the type of the passed object, the results
 of this method changes:
 
-If the passed object is a float64, then it is subtracted from each element:
+If the passed object is a float32, then it is subtracted from each element:
 
-	m := matrix.Newf64(2, 3).SetAll(5.0)
+	m := matrix.Newf32(2, 3).SetAll(5.0)
 	m.Sub(2.0)
 
 This will result in all values of m being 3.0.
-The passed Object can also be a Matf64, in which case each element of the passed
-Matf64 is subtracted from the corresponding element of the receiver. Note
-that the passed Matf64 must have the same shape as the receiver.
+The passed Object can also be a Matf32, in which case each element of the passed
+Matf32 is subtracted from the corresponding element of the receiver. Note
+that the passed Matf32 must have the same shape as the receiver.
 
-	m := matrix.Newf64(2, 3).SetAll(10.0)
+	m := matrix.Newf32(2, 3).SetAll(10.0)
 	n := m.Copy()
 	m.Sub(n)
 
 This will result in each element of m being 0.0.
 */
-func (m *Matf64) Sub(float64OrMatf64 interface{}) *Matf64 {
-	switch v := float64OrMatf64.(type) {
-	case float64:
+func (m *Matf32) Sub(float64OrMatf32 interface{}) *Matf32 {
+	switch v := float64OrMatf32.(type) {
+	case float32:
+		v32 := float32(v)
 		for i := range m.vals {
-			m.vals[i] -= v
+			m.vals[i] -= v32
 		}
-	case *Matf64:
+	case *Matf32:
 		if v.r != m.r {
-			s := "\nIn matrix.%s, the number of the rows of the receiver is %d\n"
+			s := "\nIn %s, the number of the rows of the receiver is %d\n"
 			s += "but the number of rows of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Sub()", m.r, v.r)
 			printErr(s)
 		}
 		if v.c != m.c {
-			s := "\nIn matrix.%s, the number of the columns of the receiver is %d\n"
+			s := "\nIn %s, the number of the columns of the receiver is %d\n"
 			s += "but the number of columns of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Sub()", m.c, v.c)
 			printErr(s)
 		}
-		vecf64.Sub(m.vals, v.vals)
+		vecf32.Sub(m.vals, v.vals)
 	default:
-		s := "\nIn matrix.%s, the passed value must be a float64 or *Matf64.\n"
+		s := "\nIn %s, the passed value must be a float32 or *Matf32.\n"
 		s += "However, value of type  \"%v\" was received.\n"
 		s = fmt.Sprintf(s, "Sub()", reflect.TypeOf(v))
 		printErr(s)
@@ -1100,50 +995,51 @@ Div carries the division operation between each element of the receiver
 and an object passed to it. Based on the type of the passed object, the results
 of this method changes:
 
-If the passed object is a float64, then each element of the receiver is devided
+If the passed object is a float32, then each element of the receiver is devided
 by it:
 
-	m := Newf64(2, 3).SetAll(5.0)
+	m := Newf32(2, 3).SetAll(5.0)
 	m.Div(2.0)
 
-This will result in all values of m being 2.5. Note that the passed float64
+This will result in all values of m being 2.5. Note that the passed float32
 cannot be 0.0.
 
-The passed Object can also be a Matf64, in which case each element of the passed
-Matf64 is subtracted from the corresponding element of the receiver. Note
-that the passed Matf64 must have the same shape as the receiver, and it cannot
+The passed Object can also be a Matf32, in which case each element of the passed
+Matf32 is subtracted from the corresponding element of the receiver. Note
+that the passed Matf32 must have the same shape as the receiver, and it cannot
 contains any elements which are 0.0.
 
-	m := matrix.Newf64(2, 3).SetAll(10.0)
+	m := matrix.Newf32(2, 3).SetAll(10.0)
 	n := m.Copy()
 	m.Div(n)
 
 This will result in each element of m being 1.0.
 */
-func (m *Matf64) Div(float64OrMatf64 interface{}) *Matf64 {
-	switch v := float64OrMatf64.(type) {
+func (m *Matf32) Div(float64OrMatf32 interface{}) *Matf32 {
+	switch v := float64OrMatf32.(type) {
 	case float64:
+		v32 := float32(v)
 		for i := range m.vals {
-			m.vals[i] /= v
+			m.vals[i] /= v32
 		}
-	case *Matf64:
+	case *Matf32:
 		if v.r != m.r {
-			s := "\nIn matrix.%s, the number of the rows of the receiver is %d\n"
+			s := "\nIn %s, the number of the rows of the receiver is %d\n"
 			s += "but the number of rows of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Div()", m.r, v.r)
 			printErr(s)
 		}
 		if v.c != m.c {
-			s := "\nIn matrix.%s, the number of the columns of the receiver is %d\n"
+			s := "\nIn %s, the number of the columns of the receiver is %d\n"
 			s += "but the number of columns of the passed mat is %d. They must\n"
 			s += "match.\n"
 			s = fmt.Sprintf(s, "Div()", m.c, v.c)
 			printErr(s)
 		}
-		vecf64.Div(m.vals, v.vals)
+		vecf32.Div(m.vals, v.vals)
 	default:
-		s := "\nIn matrix.%s, the passed value must be a float64 or *Matf64.\n"
+		s := "\nIn %s, the passed value must be a float32 or *Matf32.\n"
 		s += "However, value of type  \"%v\" was received.\n"
 		s = fmt.Sprintf(s, "Div()", reflect.TypeOf(v))
 		printErr(s)
@@ -1152,7 +1048,7 @@ func (m *Matf64) Div(float64OrMatf64 interface{}) *Matf64 {
 }
 
 /*
-Sum takes the sum of the elements of a Matf64. It can be called in one of two ways:
+Sum takes the sum of the elements of a Matf32. It can be called in one of two ways:
 
 	m.Sum()
 
@@ -1166,8 +1062,8 @@ row or column. For example:
 Note that second passed integer cannot be less than 0, or greater that the
 length of the matrix in that dimension.
 */
-func (m *Matf64) Sum(args ...int) float64 {
-	sum := 0.0
+func (m *Matf32) Sum(args ...int) float32 {
+	var sum float32
 	switch len(args) {
 	case 0:
 		for i := range m.vals {
@@ -1178,7 +1074,7 @@ func (m *Matf64) Sum(args ...int) float64 {
 		switch axis {
 		case 0:
 			if (slice >= m.r) || (slice < 0) {
-				s := "\nIn matrix.%s the row %d is outside of bounds [0, %d)\n"
+				s := "\nIn %s the row %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Sum()", slice, m.r)
 				printErr(s)
 			}
@@ -1187,7 +1083,7 @@ func (m *Matf64) Sum(args ...int) float64 {
 			}
 		case 1:
 			if (slice >= m.c) || (slice < 0) {
-				s := "\nIn matrix.%s the column %d is outside of bounds [0, %d)\n"
+				s := "\nIn %s the column %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Sum()", slice, m.c)
 				printErr(s)
 			}
@@ -1195,13 +1091,13 @@ func (m *Matf64) Sum(args ...int) float64 {
 				sum += m.vals[i*m.c+slice]
 			}
 		default:
-			s := "\nIn matrix.%s, the first argument must be 0 or 1, however %d "
+			s := "\nIn %s, the first argument must be 0 or 1, however %d "
 			s += "was received.\n"
 			s = fmt.Sprintf(s, "Sum()", axis)
 			printErr(s)
 		}
 	default:
-		s := "\nIn matrix.%s, 0 or 2 arguments expected, but %d was received.\n"
+		s := "\nIn %s, 0 or 2 arguments expected, but %d was received.\n"
 		s = fmt.Sprintf(s, "Sum()", len(args))
 		printErr(s)
 	}
@@ -1209,7 +1105,7 @@ func (m *Matf64) Sum(args ...int) float64 {
 }
 
 /*
-Avg takes the average of the elements of a Matf64. It can be called in one of two ways:
+Avg takes the average of the elements of a Matf32. It can be called in one of two ways:
 
 	m.Avg()
 
@@ -1223,44 +1119,44 @@ specifying the row or column. For example:
 Note that second passed integer cannot be less than 0, or greater that the
 length of the matrix in that dimension.
 */
-func (m *Matf64) Avg(args ...int) float64 {
-	sum := 0.0
+func (m *Matf32) Avg(args ...int) float32 {
+	var sum float32
 	switch len(args) {
 	case 0:
 		for i := range m.vals {
 			sum += m.vals[i]
 		}
-		sum /= float64(len(m.vals))
+		sum /= float32(len(m.vals))
 	case 2:
 		axis, slice := args[0], args[1]
 		if axis == 0 {
 			if (slice >= m.r) || (slice < 0) {
-				s := "\nIn matrix.%s the row %d is outside of bounds [0, %d)\n"
+				s := "\nIn %s the row %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Avg()", slice, m.r)
 				printErr(s)
 			}
 			for i := 0; i < m.c; i++ {
 				sum += m.vals[slice*m.c+i]
 			}
-			sum /= float64(m.c)
+			sum /= float32(m.c)
 		} else if axis == 1 {
 			if (slice >= m.c) || (slice < 0) {
-				s := "\nIn matrix.%s the column %d is outside of bounds [0, %d)\n"
+				s := "\nIn %s the column %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Avg()", slice, m.c)
 				printErr(s)
 			}
 			for i := 0; i < m.r; i++ {
 				sum += m.vals[i*m.c+slice]
 			}
-			sum /= float64(m.r)
+			sum /= float32(m.r)
 		} else {
-			s := "\nIn matrix.%s, the first argument must be 0 or 1, however %d "
+			s := "\nIn %s, the first argument must be 0 or 1, however %d "
 			s += "was received.\n"
 			s = fmt.Sprintf(s, "Avg()", axis)
 			printErr(s)
 		}
 	default:
-		s := "\nIn matrix.%s, 0 or 2 arguments expected, but %d was received.\n"
+		s := "\nIn %s, 0 or 2 arguments expected, but %d was received.\n"
 		s = fmt.Sprintf(s, "Avg()", len(args))
 		printErr(s)
 	}
@@ -1268,7 +1164,7 @@ func (m *Matf64) Avg(args ...int) float64 {
 }
 
 /*
-Prd takes the product of the elements of a Matf64. It can be called in one of two
+Prd takes the product of the elements of a Matf32. It can be called in one of two
 ways:
 
 	m.Prd()
@@ -1283,8 +1179,8 @@ specifying the row or column. For example:
 Note that second passed integer cannot be less than 0, or greater that the
 length of the matrix in that dimension.
 */
-func (m *Matf64) Prd(args ...int) float64 {
-	prd := 1.0
+func (m *Matf32) Prd(args ...int) float32 {
+	prd := float32(1.0)
 	switch len(args) {
 	case 0:
 		for i := range m.vals {
@@ -1294,7 +1190,7 @@ func (m *Matf64) Prd(args ...int) float64 {
 		axis, slice := args[0], args[1]
 		if axis == 0 {
 			if (slice >= m.r) || (slice < 0) {
-				s := "\nIn matrix.%s the row %d is outside of bounds [0, %d)\n"
+				s := "\nIn %s the row %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Prd()", slice, m.r)
 				printErr(s)
 			}
@@ -1303,7 +1199,7 @@ func (m *Matf64) Prd(args ...int) float64 {
 			}
 		} else if axis == 1 {
 			if (slice >= m.c) || (slice < 0) {
-				s := "\nIn matrix.%s the column %d is outside of bounds [0, %d)\n"
+				s := "\nIn %s the column %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Prd()", slice, m.c)
 				printErr(s)
 			}
@@ -1311,13 +1207,13 @@ func (m *Matf64) Prd(args ...int) float64 {
 				prd *= m.vals[i*m.c+slice]
 			}
 		} else {
-			s := "\nIn matrix.%s, the first argument must be 0 or 1, however %d "
+			s := "\nIn %s, the first argument must be 0 or 1, however %d "
 			s += "was received.\n"
 			s = fmt.Sprintf(s, "Prd()", axis)
 			printErr(s)
 		}
 	default:
-		s := "\nIn matrix.%s, 0 or 2 arguments expected, but %d was received.\n"
+		s := "\nIn %s, 0 or 2 arguments expected, but %d was received.\n"
 		s = fmt.Sprintf(s, "Prd()", len(args))
 		printErr(s)
 	}
@@ -1325,7 +1221,7 @@ func (m *Matf64) Prd(args ...int) float64 {
 }
 
 /*
-Std takes the standard deviation of the elements of a Matf64. It can be called in
+Std takes the standard deviation of the elements of a Matf32. It can be called in
 one of two ways:
 
 	m.Std()
@@ -1340,50 +1236,48 @@ specifying the row or column. For example:
 Note that second passed integer cannot be less than 0, or greater that the
 length of the matrix in that dimension.
 */
-func (m *Matf64) Std(args ...int) float64 {
-	std := 0.0
+func (m *Matf32) Std(args ...int) float32 {
+	var std float32
+	var sum float32
 	switch len(args) {
 	case 0:
 		avg := m.Avg()
-		sum := 0.0
 		for i := range m.vals {
 			sum += ((avg - m.vals[i]) * (avg - m.vals[i]))
 		}
-		std = math.Sqrt(sum / float64(len(m.vals)))
+		std = float32(math.Sqrt(float64(sum) / float64(len(m.vals))))
 	case 2:
 		axis, slice := args[0], args[1]
 		if axis == 0 {
 			if (slice >= m.r) || (slice < 0) {
-				s := "\nIn matrix.%s the row %d is outside of bounds [0, %d)\n"
+				s := "\nIn %s the row %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Std()", slice, m.r)
 				printErr(s)
 			}
 			avg := m.Avg(axis, slice)
-			sum := 0.0
 			for i := 0; i < m.c; i++ {
 				sum += ((avg - m.vals[slice*m.c+i]) * (avg - m.vals[slice*m.c+i]))
 			}
-			std = math.Sqrt(sum / float64(len(m.vals)))
+			std = float32(math.Sqrt(float64(sum) / float64(len(m.vals))))
 		} else if axis == 1 {
 			if (slice >= m.c) || (slice < 0) {
-				s := "\nIn matrix.%s the column %d is outside of bounds [0, %d)\n"
+				s := "\nIn %s the column %d is outside of bounds [0, %d)\n"
 				s = fmt.Sprintf(s, "Std()", slice, m.c)
 				printErr(s)
 			}
 			avg := m.Avg(axis, slice)
-			sum := 0.0
 			for i := 0; i < m.r; i++ {
 				sum += ((avg - m.vals[i*m.c+slice]) * (avg - m.vals[i*m.c+slice]))
 			}
-			std = math.Sqrt(sum / float64(len(m.vals)))
+			std = float32(math.Sqrt(float64(sum) / float64(len(m.vals))))
 		} else {
-			s := "\nIn matrix.%s, the first argument must be 0 or 1, however %d "
+			s := "\nIn %s, the first argument must be 0 or 1, however %d "
 			s += "was received.\n"
 			s = fmt.Sprintf(s, "Std()", axis)
 			printErr(s)
 		}
 	default:
-		s := "\nIn matrix.%s, 0 or 2 arguments must be passed, but %d was received.\n"
+		s := "\nIn %s, 0 or 2 arguments must be passed, but %d was received.\n"
 		s = fmt.Sprintf(s, "Std()", len(args))
 		printErr(s)
 	}
@@ -1394,8 +1288,8 @@ func (m *Matf64) Std(args ...int) float64 {
 Dot is the matrix multiplication of two mat objects. Consider the following two
 mats:
 
-	m := matrix.Newf64(5, 6)
-	n := matrix.Newf64(6, 10)
+	m := matrix.Newf32(5, 6)
+	n := matrix.Newf32(6, 10)
 
 then
 
@@ -1405,15 +1299,18 @@ is a 5 by 10 mat whose element at row i and column j is given by:
 
 	Sum(m.Row(i).Mul(n.col(j))
 */
-func (m *Matf64) Dot(n *Matf64) *Matf64 {
+func (m *Matf32) Dot(n *Matf32) *Matf32 {
 	if m.c != n.r {
-		s := "\nIn matrix.%s the number of columns of the first mat is %d\n"
+		s := "\nIn %s the number of columns of the first mat is %d\n"
 		s += "which is not equal to the number of rows of the second mat,\n"
 		s += "which is %d. They must be equal.\n"
 		s = fmt.Sprintf(s, "Dot()", m.c, n.r)
 		printErr(s)
 	}
-	o := Newf64(m.r, n.c)
+	o := Newf32(m.r, n.c)
+	m.vals = m.vals[:len(m.vals)]
+	n.vals = n.vals[:len(n.vals)]
+	o.vals = o.vals[:len(o.vals)]
 	for i := 0; i < m.r; i++ {
 		for j := 0; j < n.c; j++ {
 			for k := 0; k < m.c; k++ {
@@ -1425,38 +1322,11 @@ func (m *Matf64) Dot(n *Matf64) *Matf64 {
 }
 
 /*
-String returns the string representation of a mat. This is done by putting
-every row into a line, and separating the entries of that row by a space. note
-that the last line does not contain a newline.
+AppendCol appends a column to the right side of a Matf32.
 */
-func (m *Matf64) String() string {
-	var str string
-	str += "["
-	for i := 0; i < m.r; i++ {
-		for j := 0; j < m.c; j++ {
-			if j == 0 {
-				str += "["
-			}
-			str += strconv.FormatFloat(m.vals[i*m.c+j], 'f', 14, 64)
-			if j+1 != m.c {
-				str += ",\t"
-			}
-		}
-		if i+1 <= m.r {
-			str += "]\n "
-		}
-	}
-	str = str[:len(str)-2] // take out the last newline.
-	str += "]\n"
-	return str
-}
-
-/*
-AppendCol appends a column to the right side of a Matf64.
-*/
-func (m *Matf64) AppendCol(v []float64) *Matf64 {
+func (m *Matf32) AppendCol(v []float32) *Matf32 {
 	if m.r != len(v) {
-		s := "\nIn matrix.%s the number of rows of the receiver is %d, while\n"
+		s := "\nIn %s the number of rows of the receiver is %d, while\n"
 		s += "the number of rows of the vector is %d. They must be equal.\n"
 		s = fmt.Sprintf(s, "AppendCol()", m.r, len(v))
 		printErr(s)
@@ -1478,17 +1348,17 @@ func (m *Matf64) AppendCol(v []float64) *Matf64 {
 }
 
 /*
-AppendRow appends a row to the bottom of a Matf64.
+AppendRow appends a row to the bottom of a Matf32.
 */
-func (m *Matf64) AppendRow(v []float64) *Matf64 {
+func (m *Matf32) AppendRow(v []float32) *Matf32 {
 	if m.c != len(v) {
-		s := "\nIn matrix.%s the number of cols of the receiver is %d, while\n"
+		s := "\nIn %s the number of cols of the receiver is %d, while\n"
 		s += "the number of rows of the vector is %d. They must be equal.\n"
 		s = fmt.Sprintf(s, "AppendRow()", m.c, len(v))
 		printErr(s)
 	}
 	if cap(m.vals) < (len(m.vals) + len(v)) {
-		newVals := make([]float64, len(m.vals)+len(v), len(m.vals)+len(v)*2)
+		newVals := make([]float32, len(m.vals)+len(v), len(m.vals)+len(v)*2)
 		lastElem := len(m.vals)
 		for i := range m.vals {
 			newVals[i] = m.vals[i]
@@ -1509,17 +1379,17 @@ Concat merges a passed mat to the right side of the receiver. The passed mat
 must therefore have the same number of rows as the receiver.
 For example:
 
-	m := matrix.Newf64(1, 2).SetAll(2.0) // [[2.0, 2.0]]
-	n := matrix.Newf64(1, 3).SetAll(3.0) // [[3.0, 3.0, 3.0]]
+	m := matrix.Newf32(1, 2).SetAll(2.0) // [[2.0, 2.0]]
+	n := matrix.Newf32(1, 3).SetAll(3.0) // [[3.0, 3.0, 3.0]]
 	m.Concat(n)
 	fmt.Println(m) // [[2.0, 2.0, 3.0, 3.0, 3.0]]
 
 Note that in the current implementation this is a somewhat expensive function.
 */
-func (m *Matf64) Concat(n *Matf64) *Matf64 {
+func (m *Matf32) Concat(n *Matf32) *Matf32 {
 	if m.r != n.r {
-		s := "\nIn matrix.%s the number of rows of the receiver is %d, while\n"
-		s += "the number of rows of the second Matf64 is %d. They must be equal.\n"
+		s := "\nIn %s the number of rows of the receiver is %d, while\n"
+		s += "the number of rows of the second Matf32 is %d. They must be equal.\n"
 		s = fmt.Sprintf(s, "Concat()", m.r, n.r)
 		printErr(s)
 	}
@@ -1544,17 +1414,17 @@ Append merges a passed mat to the botton of the receiver. The passed mat
 must therefore have the same number of columns as the receiver.
 For example:
 
-	m := matrix.Newf64(1, 2).SetAll(2.0) // [[2.0, 2.0]]
-	n := matrix.Newf64(2, 2).SetAll(3.0) // [[3.0, 3.0], [3.0, 3.0]]
+	m := matrix.Newf32(1, 2).SetAll(2.0) // [[2.0, 2.0]]
+	n := matrix.Newf32(2, 2).SetAll(3.0) // [[3.0, 3.0], [3.0, 3.0]]
 	m.Append(n)
 	fmt.Println(m) // [[2.0, 2.0], [3.0, 3.0], [3.0, 3.0]]
 
 Note that in the current implementation this is a somewhat expensive function.
 */
-func (m *Matf64) Append(n *Matf64) *Matf64 {
+func (m *Matf32) Append(n *Matf32) *Matf32 {
 	if m.c != n.c {
-		s := "\nIn matrix.%s the number of cols of the receiver is %d, while\n"
-		s += "the number of cols of the passed Matf64 is %d. They must be equal.\n"
+		s := "\nIn %s the number of cols of the receiver is %d, while\n"
+		s += "the number of cols of the passed Matf32 is %d. They must be equal.\n"
 		s = fmt.Sprintf(s, "Append()", m.c, n.c)
 		printErr(s)
 	}
