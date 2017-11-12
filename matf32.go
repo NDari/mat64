@@ -90,6 +90,17 @@ func Newf32(dims ...int) *Matf32 {
 }
 
 /*
+If32 returns the identity matrix
+*/
+func If32(x int) *Matf32 {
+	m := Newf32(x)
+	for i := 1; i < x; i++ {
+		m.vals[i*i-1] = float32(1.0)
+	}
+	return m
+}
+
+/*
 Matf32FromData creates a mat object from a []float32 or a [][]float32 slice.
 This function is designed to do the "right thing" based on the type of
 the slice passed to it. The "right thing" based on each possible case
@@ -342,23 +353,48 @@ func (m *Matf32) Shape() (int, int) {
 }
 
 /*
-Vals returns the values contained in a mat object as a 1D slice of float32s.
+ToSlice1D returns the values contained in a mat object as a 1D slice of float32s.
 */
-func (m *Matf32) Vals() []float32 {
+func (m *Matf32) ToSlice1D() []float32 {
 	s := make([]float32, len(m.vals))
 	copy(s, m.vals)
 	return s
 }
 
 /*
-ToSlice returns the values of a mat object as a 2D slice of float32s.
+ToSlice2D returns the values of a mat object as a 2D slice of float32s.
 */
-func (m *Matf32) ToSlice() [][]float32 {
+func (m *Matf32) ToSlice2D() [][]float32 {
 	s := make([][]float32, m.r)
 	for i := range s {
 		s[i] = make([]float32, m.c)
 		for j := range s[i] {
 			s[i][j] = m.vals[i*m.c+j]
+		}
+	}
+	return s
+}
+
+/*
+ToSlice1Df64 returns the values contained in a mat object as a 1D slice of float64s.
+*/
+func (m *Matf32) ToSlice1Df64() []float64 {
+	s := make([]float64, len(m.vals))
+	for i := range m.vals {
+		s[i] = float64(m.vals[i])
+	}
+	return s
+}
+
+/*
+ToSlice2Df64 returns the values of a mat object as a 2D slice of float64s.
+*/
+func (m *Matf32) ToSlice2Df64() [][]float64 {
+	s := make([][]float64, m.r)
+	for i := range s {
+		s[i] = make([]float64, m.c)
+		for j := range s[i] {
+			s[i][j] = float64(m.vals[i*m.c+j])
 		}
 	}
 	return s
@@ -1333,7 +1369,7 @@ func (m *Matf32) AppendCol(v []float32) *Matf32 {
 	}
 	// TODO: redo this by hand, instead of taking this shortcut... or check if
 	// this is a huge bottleneck
-	q := m.ToSlice()
+	q := m.ToSlice2D()
 	for i := range q {
 		q[i] = append(q[i], v[i])
 	}
@@ -1393,9 +1429,9 @@ func (m *Matf32) Concat(n *Matf32) *Matf32 {
 		s = fmt.Sprintf(s, "Concat()", m.r, n.r)
 		printErr(s)
 	}
-	q := m.ToSlice()
-	t := n.Vals()
-	r := n.ToSlice()
+	q := m.ToSlice2D()
+	t := n.ToSlice1D()
+	r := n.ToSlice2D()
 	m.vals = append(m.vals, t...)
 	for i := range q {
 		q[i] = append(q[i], r[i]...)

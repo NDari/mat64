@@ -205,18 +205,24 @@ func TestShapef32(t *testing.T) {
 	assert.Equal(t, c, m.c, "should be equal")
 }
 
-func TestValsf32(t *testing.T) {
+func TestToSlice1Df32(t *testing.T) {
 	t.Helper()
 	rows, cols := 22, 22
 	m := Newf32(rows, cols)
 	m.SetAll(1.0)
-	assert.Equal(t, rows*cols, len(m.vals), "should be equal")
-	for i := range m.vals {
-		assert.Equal(t, float32(1.0), m.vals[i], "should be equal")
+	v := m.ToSlice1D()
+	assert.Equal(t, rows*cols, len(v), "should be equal")
+	for i := range v {
+		assert.Equal(t, float32(1.0), v[i], "should be equal")
+	}
+	w := m.ToSlice1Df64()
+	assert.Equal(t, rows*cols, len(w), "should be equal")
+	for i := range v {
+		assert.Equal(t, 1.0, w[i], "should be equal")
 	}
 }
 
-func TestToSlicef32(t *testing.T) {
+func TestToSlice2Df32(t *testing.T) {
 	t.Helper()
 	rows := 13
 	cols := 21
@@ -225,7 +231,7 @@ func TestToSlicef32(t *testing.T) {
 		m.vals[i] = float32(i)
 	}
 
-	s := m.ToSlice()
+	s := m.ToSlice2D()
 	assert.Equal(t, m.r, len(s), "should be equal")
 	assert.Equal(t, m.c, len(s[0]), "should be equal")
 	idx := 0
@@ -239,6 +245,21 @@ func TestToSlicef32(t *testing.T) {
 	assert.NotEqual(t, s[0][0], m.vals[0], "changing data should not effect mat")
 	m.vals[0] = 1201.0
 	assert.NotEqual(t, m.vals[0], s[0][0], "changing mat should not effect data")
+
+	u := m.ToSlice2Df64()
+	assert.Equal(t, m.r, len(u), "should be equal")
+	assert.Equal(t, m.c, len(u[0]), "should be equal")
+	idx = 0
+	for i := range u {
+		for j := range u[i] {
+			assert.Equal(t, u[i][j], float64(m.vals[idx]), "should be equal")
+			idx++
+		}
+	}
+	u[0][0] = 1021.0
+	assert.NotEqual(t, u[0][0], m.vals[0], "changing data should not effect mat")
+	m.vals[0] = 1201.0
+	assert.NotEqual(t, m.vals[0], u[0][0], "changing mat should not effect data")
 }
 
 func TestGetf32(t *testing.T) {
@@ -487,13 +508,16 @@ func TestTf32(t *testing.T) {
 		m.vals[i] = float32(i)
 	}
 	n := m.T()
-	p := m.ToSlice()
-	q := n.ToSlice()
+	p := m.ToSlice2D()
+	q := n.ToSlice2D()
 	for i := 0; i < m.r; i++ {
 		for j := 0; j < m.c; j++ {
 			assert.Equal(t, p[i][j], q[j][i], "should be equal")
 		}
 	}
+	res := m.Dot(n)
+	resT := res.T()
+	assert.True(t, resT.Equals(res), "should be equal")
 }
 
 func BenchmarkTf32(b *testing.B) {
@@ -754,18 +778,21 @@ func TestDotf32(t *testing.T) {
 	bra.SetAll(2.0)
 	ket := Newf32(1, 3).SetAll(3.0)
 	bracket := bra.Dot(ket)
-	v := bracket.Vals()
+	v := bracket.ToSlice1D()
 	assert.Equal(t, 9, len(v))
 	for i := range v {
 		assert.Equal(t, float32(6.0), v[i])
 	}
 	bracket = ket.Dot(bra)
-	v = bracket.Vals()
+	v = bracket.ToSlice1D()
 	assert.Equal(t, 1, len(v))
 	for i := range v {
 		assert.Equal(t, float32(18.0), v[i])
 	}
-
+	x := Newf32(13)
+	y := If32(13)
+	z := x.Dot(y)
+	assert.True(t, x.Equals(z), "A times I should equal A")
 }
 
 func BenchmarkDotf32(b *testing.B) {

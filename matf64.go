@@ -45,7 +45,7 @@ type Matf64 struct {
 }
 
 /*
-New is the primary constructor for the "Matf64" object. New is a variadic function,
+Newf64 is the primary constructor for the "Matf64" object. New is a variadic function,
 expecting 0 to 2 integers, with differing behavior as follows:
 
 	m := matrix.Newf64()
@@ -89,6 +89,17 @@ func Newf64(dims ...int) *Matf64 {
 		s := "\nIn matrix.%s, expected 0 to 2 arguments, but received %d arguments."
 		s = fmt.Sprintf(s, "Newf64()", len(dims))
 		printErr(s)
+	}
+	return m
+}
+
+/*
+If64 returns the identity matrix
+*/
+func If64(x int) *Matf64 {
+	m := Newf64(x)
+	for i := 1; i < x; i++ {
+		m.vals[i*i-1] = 1.0
 	}
 	return m
 }
@@ -412,18 +423,18 @@ func (m *Matf64) Shape() (int, int) {
 }
 
 /*
-Vals returns the values contained in a mat object as a 1D slice of float64s.
+ToSlice1D returns the values contained in a mat object as a 1D slice of float64s.
 */
-func (m *Matf64) Vals() []float64 {
+func (m *Matf64) ToSlice1D() []float64 {
 	s := make([]float64, len(m.vals))
 	copy(s, m.vals)
 	return s
 }
 
 /*
-ToSlice returns the values of a mat object as a 2D slice of float64s.
+ToSlice2D returns the values of a mat object as a 2D slice of float64s.
 */
-func (m *Matf64) ToSlice() [][]float64 {
+func (m *Matf64) ToSlice2D() [][]float64 {
 	s := make([][]float64, m.r)
 	for i := range s {
 		s[i] = make([]float64, m.c)
@@ -1463,7 +1474,7 @@ func (m *Matf64) AppendCol(v []float64) *Matf64 {
 	}
 	// TODO: redo this by hand, instead of taking this shortcut... or check if
 	// this is a huge bottleneck
-	q := m.ToSlice()
+	q := m.ToSlice2D()
 	for i := range q {
 		q[i] = append(q[i], v[i])
 	}
@@ -1523,9 +1534,9 @@ func (m *Matf64) Concat(n *Matf64) *Matf64 {
 		s = fmt.Sprintf(s, "Concat()", m.r, n.r)
 		printErr(s)
 	}
-	q := m.ToSlice()
-	t := n.Vals()
-	r := n.ToSlice()
+	q := m.ToSlice2D()
+	t := n.ToSlice1D()
+	r := n.ToSlice2D()
 	m.vals = append(m.vals, t...)
 	for i := range q {
 		q[i] = append(q[i], r[i]...)

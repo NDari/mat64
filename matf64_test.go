@@ -270,7 +270,7 @@ func TestToSlicef64(t *testing.T) {
 		m.vals[i] = float64(i)
 	}
 
-	s := m.ToSlice()
+	s := m.ToSlice2D()
 	assert.Equal(t, m.r, len(s), "should be equal")
 	assert.Equal(t, m.c, len(s[0]), "should be equal")
 	idx := 0
@@ -547,13 +547,16 @@ func TestTf64(t *testing.T) {
 		m.vals[i] = float64(i)
 	}
 	n := m.T()
-	p := m.ToSlice()
-	q := n.ToSlice()
+	p := m.ToSlice2D()
+	q := n.ToSlice2D()
 	for i := 0; i < m.r; i++ {
 		for j := 0; j < m.c; j++ {
 			assert.Equal(t, p[i][j], q[j][i], "should be equal")
 		}
 	}
+	res := m.Dot(n)
+	resT := res.T()
+	assert.True(t, resT.Equals(res), "should be equal")
 }
 
 func BenchmarkTf64(b *testing.B) {
@@ -814,18 +817,21 @@ func TestDotf64(t *testing.T) {
 	bra.SetAll(2.0)
 	ket := Newf64(1, 3).SetAll(3.0)
 	bracket := bra.Dot(ket)
-	v := bracket.Vals()
+	v := bracket.ToSlice1D()
 	assert.Equal(t, 9, len(v))
 	for i := range v {
 		assert.Equal(t, 6.0, v[i])
 	}
 	bracket = ket.Dot(bra)
-	v = bracket.Vals()
+	v = bracket.ToSlice1D()
 	assert.Equal(t, 1, len(v))
 	for i := range v {
 		assert.Equal(t, 18.0, v[i])
 	}
-
+	x := Newf64(13)
+	y := If64(13)
+	z := x.Dot(y)
+	assert.True(t, x.Equals(z), "A times I should equal A")
 }
 
 func BenchmarkDotf64(b *testing.B) {
