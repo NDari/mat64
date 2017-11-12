@@ -2,28 +2,28 @@
 
 
 [[projects]]
+  name = "github.com/chewxy/math32"
+  packages = ["."]
+  revision = "d1e7b22839c693f54edf7811dd9487623abf2cd2"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/chewxy/vecf32"
+  packages = ["."]
+  revision = "0f5e85efb83554d5308b0266d26fab2feaa61e9a"
+  version = "v0.7.0"
+
+[[projects]]
+  name = "github.com/chewxy/vecf64"
+  packages = ["."]
+  revision = "db46c8c0bc0d98abc210149eba40f76337dc5f3a"
+  version = "v0.7.0"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
-
-[[projects]]
-  name = "github.com/fatih/color"
-  packages = ["."]
-  revision = "570b54cabe6b8eb0bc2dfce68d964677d63b5260"
-  version = "v1.5.0"
-
-[[projects]]
-  name = "github.com/mattn/go-colorable"
-  packages = ["."]
-  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
-  version = "v0.0.9"
-
-[[projects]]
-  name = "github.com/mattn/go-isatty"
-  packages = ["."]
-  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
-  version = "v0.0.3"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -37,15 +37,9 @@
   revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
   version = "v1.1.4"
 
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/sys"
-  packages = ["unix"]
-  revision = "1e2299c37cc91a509f1b12369872d27be0ce98a6"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "eb9c25b97090a0244fbce86917ace766e08f5427873e1cc064b842d77d0b24a3"
+  inputs-digest = "be89667c9087487bafc114ee9c1cfaf62b94978473386f9a1992aaef325c0520"
   solver-name = "gps-cdcl"
   solver-version = 1

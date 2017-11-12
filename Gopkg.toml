@@ -22,8 +22,12 @@
 
 
 [[constraint]]
-  name = "github.com/fatih/color"
-  version = "1.5.0"
+  name = "github.com/chewxy/vecf32"
+  version = "0.7.0"
+
+[[constraint]]
+  name = "github.com/chewxy/vecf64"
+  version = "0.7.0"
 
 [[constraint]]
   name = "github.com/stretchr/testify"
