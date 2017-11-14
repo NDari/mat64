@@ -507,7 +507,8 @@ func TestTf32(t *testing.T) {
 	for i := range m.vals {
 		m.vals[i] = float32(i)
 	}
-	n := m.T()
+	n := m.Copy()
+	m.T()
 	p := m.ToSlice2D()
 	q := n.ToSlice2D()
 	for i := 0; i < m.r; i++ {
@@ -516,8 +517,9 @@ func TestTf32(t *testing.T) {
 		}
 	}
 	res := m.Dot(n)
-	resT := res.T()
-	assert.True(t, resT.Equals(res), "should be equal")
+	res2 := res.Copy()
+	res.T()
+	assert.True(t, res2.Equals(res), "should be equal")
 }
 
 func BenchmarkTf32(b *testing.B) {
@@ -528,6 +530,25 @@ func BenchmarkTf32(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = m.T()
+	}
+}
+
+func BenchmarkTf32Vanilla(b *testing.B) {
+	m := make([][]float32, 1000)
+	for i := range m {
+		m[i] = make([]float32, 251)
+	}
+	b.ResetTimer()
+	for k := 0; k < b.N; k++ {
+		n := make([][]float32, len(m[0]))
+		for i := range n {
+			n[i] = make([]float32, len(m))
+		}
+		for i := range m {
+			for j := range m[i] {
+				n[j][i] = m[i][j]
+			}
+		}
 	}
 }
 

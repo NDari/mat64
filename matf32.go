@@ -797,16 +797,19 @@ T returns the transpose of the original matrix. The transpose of a mat object
 is defined in the usual manner, where every value at row x, and column y is
 placed at row y, and column x. The number of rows and column of the transposed
 mat are equal to the number of columns and rows of the original matrix,
-respectively. This method creates a new mat object, and the original is
-left intact.
+respectively.
 */
 func (m *Matf32) T() *Matf32 {
 	if m.isRowVector() || m.isColVector() {
-		n := m.Copy()
-		n.r, n.c = n.c, n.r
-		return n
+		m.r, m.c = m.c, m.r
+		return m
 	}
-	n := Newf32(m.c, m.r)
+	n := f32Pool.get()
+	defer f32Pool.put(n)
+
+	if cap(n.vals) < m.c*m.r {
+		n.vals = make([]float32, m.c*m.r, 2*m.c*m.r)
+	}
 	idx := 0
 	for i := 0; i < m.c; i++ {
 		for j := 0; j < m.r; j++ {
@@ -814,7 +817,9 @@ func (m *Matf32) T() *Matf32 {
 			idx++
 		}
 	}
-	return n
+	m.r, m.c = m.c, m.r
+	copy(m.vals, n.vals)
+	return m
 }
 
 func (m *Matf32) isRowVector() bool {
@@ -1343,15 +1348,19 @@ func (m *Matf32) Dot(n *Matf32) *Matf32 {
 		s = fmt.Sprintf(s, "Dot()", m.c, n.r)
 		printErr(s)
 	}
+
 	o := Newf32(m.r, n.c)
 	m.vals = m.vals[:len(m.vals)]
 	n.vals = n.vals[:len(n.vals)]
 	o.vals = o.vals[:len(o.vals)]
 	for i := 0; i < m.r; i++ {
+		mIdx := i * m.c
 		for j := 0; j < n.c; j++ {
+			sum := float32(0.0)
 			for k := 0; k < m.c; k++ {
-				o.vals[i*o.c+j] += (m.vals[i*m.c+k] * n.vals[k*n.c+j])
+				sum += (m.vals[mIdx+k] * n.vals[k*n.c+j])
 			}
+			o.vals[i*n.c+j] = sum
 		}
 	}
 	return o

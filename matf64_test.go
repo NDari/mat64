@@ -546,7 +546,8 @@ func TestTf64(t *testing.T) {
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
-	n := m.T()
+	n := m.Copy()
+	m.T()
 	p := m.ToSlice2D()
 	q := n.ToSlice2D()
 	for i := 0; i < m.r; i++ {
@@ -554,9 +555,9 @@ func TestTf64(t *testing.T) {
 			assert.Equal(t, p[i][j], q[j][i], "should be equal")
 		}
 	}
-	res := m.Dot(n)
-	resT := res.T()
-	assert.True(t, resT.Equals(res), "should be equal")
+	res := m.Copy()
+	res.T().T()
+	assert.True(t, m.Equals(res), "should be equal")
 }
 
 func BenchmarkTf64(b *testing.B) {
@@ -566,7 +567,26 @@ func BenchmarkTf64(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = m.T()
+		m.T()
+	}
+}
+
+func BenchmarkTf64Vanilla(b *testing.B) {
+	m := make([][]float64, 1000)
+	for i := range m {
+		m[i] = make([]float64, 251)
+	}
+	b.ResetTimer()
+	for k := 0; k < b.N; k++ {
+		n := make([][]float64, len(m[0]))
+		for i := range n {
+			n[i] = make([]float64, len(m))
+		}
+		for i := range m {
+			for j := range m[i] {
+				n[j][i] = m[i][j]
+			}
+		}
 	}
 }
 
@@ -814,7 +834,6 @@ func TestDotf64(t *testing.T) {
 		assert.Equal(t, 0.0, q.vals[i], "should be zero")
 	}
 	bra := Newf64(3, 1).SetAll(2.0)
-	bra.SetAll(2.0)
 	ket := Newf64(1, 3).SetAll(3.0)
 	bracket := bra.Dot(ket)
 	v := bracket.ToSlice1D()
@@ -822,6 +841,8 @@ func TestDotf64(t *testing.T) {
 	for i := range v {
 		assert.Equal(t, 6.0, v[i])
 	}
+	bra = Newf64(3, 1).SetAll(2.0)
+	ket = Newf64(1, 3).SetAll(3.0)
 	bracket = ket.Dot(bra)
 	v = bracket.ToSlice1D()
 	assert.Equal(t, 1, len(v))
@@ -830,8 +851,8 @@ func TestDotf64(t *testing.T) {
 	}
 	x := Newf64(13)
 	y := If64(13)
-	z := x.Dot(y)
-	assert.True(t, x.Equals(z), "A times I should equal A")
+	x1 := x.Dot(y)
+	assert.True(t, x1.Equals(x), "A times I should equal A")
 }
 
 func BenchmarkDotf64(b *testing.B) {

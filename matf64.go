@@ -885,11 +885,15 @@ left intact.
 */
 func (m *Matf64) T() *Matf64 {
 	if m.isRowVector() || m.isColVector() {
-		n := m.Copy()
-		n.r, n.c = n.c, n.r
-		return n
+		m.r, m.c = m.c, m.r
+		return m
 	}
-	n := Newf64(m.c, m.r)
+	n := f64Pool.get()
+	defer f64Pool.put(n)
+
+	if len(n.vals) < m.c*m.r {
+		n.vals = make([]float64, m.c*m.r)
+	}
 	idx := 0
 	for i := 0; i < m.c; i++ {
 		for j := 0; j < m.r; j++ {
@@ -897,7 +901,9 @@ func (m *Matf64) T() *Matf64 {
 			idx++
 		}
 	}
-	return n
+	m.r, m.c = m.c, m.r
+	copy(m.vals, n.vals)
+	return m
 }
 
 func (m *Matf64) isRowVector() bool {
@@ -1425,11 +1431,17 @@ func (m *Matf64) Dot(n *Matf64) *Matf64 {
 		printErr(s)
 	}
 	o := Newf64(m.r, n.c)
+	m.vals = m.vals[:len(m.vals)]
+	n.vals = n.vals[:len(n.vals)]
+	o.vals = o.vals[:len(o.vals)]
 	for i := 0; i < m.r; i++ {
+		mIdx := i * m.c
 		for j := 0; j < n.c; j++ {
+			sum := 0.0
 			for k := 0; k < m.c; k++ {
-				o.vals[i*o.c+j] += (m.vals[i*m.c+k] * n.vals[k*n.c+j])
+				sum += (m.vals[mIdx+k] * n.vals[k*n.c+j])
 			}
+			o.vals[i*n.c+j] = sum
 		}
 	}
 	return o
