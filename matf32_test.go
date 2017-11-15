@@ -831,6 +831,29 @@ func BenchmarkDotf32(b *testing.B) {
 	}
 }
 
+func BenchmarkDotf32Vanilla(b *testing.B) {
+	m := make([][]float32, 1000)
+	n := make([][]float32, 1000)
+	for i := range m {
+		m[i] = make([]float32, 1000)
+		n[i] = make([]float32, 1000)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		o := make([][]float32, 1000)
+		for j := range o {
+			o[j] = make([]float32, 1000)
+		}
+		for j := range m {
+			for k := range n[j] {
+				for p := range m[j] {
+					o[j][k] += m[j][p] * n[p][k]
+				}
+			}
+		}
+	}
+}
+
 func TestAppendColf32(t *testing.T) {
 	t.Helper()
 	var (

@@ -870,6 +870,29 @@ func BenchmarkDotf64(b *testing.B) {
 	}
 }
 
+func BenchmarkDotf64Vanilla(b *testing.B) {
+	m := make([][]float64, 1000)
+	n := make([][]float64, 1000)
+	for i := range m {
+		m[i] = make([]float64, 1000)
+		n[i] = make([]float64, 1000)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		o := make([][]float64, 1000)
+		for j := range o {
+			o[j] = make([]float64, 1000)
+		}
+		for j := range m {
+			for k := range n[j] {
+				for p := range m[j] {
+					o[j][k] += m[j][p] * n[p][k]
+				}
+			}
+		}
+	}
+}
+
 func TestAppendColf64(t *testing.T) {
 	t.Helper()
 	var (

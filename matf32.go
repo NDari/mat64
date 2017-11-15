@@ -807,8 +807,8 @@ func (m *Matf32) T() *Matf32 {
 	n := f32Pool.get()
 	defer f32Pool.put(n)
 
-	if cap(n.vals) < m.c*m.r {
-		n.vals = make([]float32, m.c*m.r, 2*m.c*m.r)
+	if len(n.vals) < m.c*m.r {
+		n.vals = make([]float32, m.c*m.r)
 	}
 	idx := 0
 	for i := 0; i < m.c; i++ {
@@ -1350,20 +1350,27 @@ func (m *Matf32) Dot(n *Matf32) *Matf32 {
 	}
 
 	o := Newf32(m.r, n.c)
-	m.vals = m.vals[:len(m.vals)]
-	n.vals = n.vals[:len(n.vals)]
-	o.vals = o.vals[:len(o.vals)]
+
+	n.T()
+	defer n.T()
 	for i := 0; i < m.r; i++ {
-		mIdx := i * m.c
-		for j := 0; j < n.c; j++ {
-			sum := float32(0.0)
-			for k := 0; k < m.c; k++ {
-				sum += (m.vals[mIdx+k] * n.vals[k*n.c+j])
-			}
-			o.vals[i*n.c+j] = sum
+		imc := i * m.c
+		for j := 0; j < n.r; j++ {
+			jnc := j * n.c
+			o.vals[i*n.r+j] = dotf32Helper(m.vals[imc:imc+m.c], n.vals[jnc:jnc+n.c])
 		}
 	}
 	return o
+}
+
+func dotf32Helper(a, b []float32) float32 {
+	a = a[:len(a)]
+	b = b[:len(a)]
+	sum := float32(0.0)
+	for i, v := range a {
+		sum += (v * b[i])
+	}
+	return sum
 }
 
 /*

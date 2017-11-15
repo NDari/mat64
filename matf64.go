@@ -1431,20 +1431,26 @@ func (m *Matf64) Dot(n *Matf64) *Matf64 {
 		printErr(s)
 	}
 	o := Newf64(m.r, n.c)
-	m.vals = m.vals[:len(m.vals)]
-	n.vals = n.vals[:len(n.vals)]
-	o.vals = o.vals[:len(o.vals)]
+	n.T()
+	defer n.T()
 	for i := 0; i < m.r; i++ {
-		mIdx := i * m.c
-		for j := 0; j < n.c; j++ {
-			sum := 0.0
-			for k := 0; k < m.c; k++ {
-				sum += (m.vals[mIdx+k] * n.vals[k*n.c+j])
-			}
-			o.vals[i*n.c+j] = sum
+		imc := i * m.c
+		for j := 0; j < n.r; j++ {
+			jnc := j * n.c
+			o.vals[i*n.r+j] = dotf64Helper(m.vals[imc:imc+m.c], n.vals[jnc:jnc+n.c])
 		}
 	}
 	return o
+}
+
+func dotf64Helper(a, b []float64) float64 {
+	a = a[:len(a)]
+	b = b[:len(a)]
+	sum := 0.0
+	for i, v := range a {
+		sum += (v * b[i])
+	}
+	return sum
 }
 
 /*
