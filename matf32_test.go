@@ -15,21 +15,18 @@ func TestNewf32(t *testing.T) {
 	assert.Equal(t, 0, m.c, "should be zero")
 	assert.NotNil(t, m.vals, "should not be nil")
 	assert.Equal(t, 0, len(m.vals), "should be zero")
-	assert.Equal(t, 0, cap(m.vals), "should be zero")
 
 	m = Newf32(rows)
 	assert.Equal(t, rows, m.r, "should be equal")
 	assert.Equal(t, rows, m.c, "should be equal")
 	assert.NotNil(t, m.vals, "should not be nil")
 	assert.Equal(t, rows*rows, len(m.vals), "should be equal")
-	assert.Equal(t, rows*rows, cap(m.vals), "should be equal")
 
 	m = Newf32(rows, cols)
 	assert.Equal(t, rows, m.r, "should be equal")
 	assert.Equal(t, cols, m.c, "should be equal")
 	assert.NotNil(t, m.vals, "should not be nil")
 	assert.Equal(t, rows*cols, len(m.vals), "should be equal")
-	assert.Equal(t, rows*cols, cap(m.vals), "should be equal")
 
 	// assert.Panics(t, func() { Newf32(1, 2, 3, 4) }, "should panic with 3+ args")
 }
@@ -57,36 +54,6 @@ func TestMatf32FromData(t *testing.T) {
 	m.vals[0] = 1201.0
 	assert.NotEqual(t, m.vals[0], v[0], "changing mat should not effect data")
 
-	v[0] = 0.0
-	m = Matf32FromData(v, rows*cols)
-	assert.Equal(t, rows*cols, m.r, "should be equal")
-	assert.Equal(t, 1, m.c, "should have one col")
-	assert.Equal(t, len(v), len(m.vals), "should have the same # of elements")
-	for i := range v {
-		assert.Equal(t, v[i], m.vals[i], "should be equal")
-	}
-	v[0] = 1321.0
-	assert.NotEqual(t, v[0], m.vals[0], "changing data should not effect mat")
-	m.vals[0] = 1201.0
-	assert.NotEqual(t, m.vals[0], v[0], "changing mat should not effect data")
-
-	v[0] = 0.0
-	m = Matf32FromData(v, rows, cols)
-	assert.Equal(t, rows, m.r, "should be equal")
-	assert.Equal(t, cols, m.c, "should be equal")
-	assert.Equal(t, len(v), len(m.vals), "should have the same # of elements")
-	for i := range v {
-		assert.Equal(t, v[i], m.vals[i], "should be equal")
-	}
-	v[0] = 1321.0
-	assert.NotEqual(t, v[0], m.vals[0], "changing data should not effect mat")
-	m.vals[0] = 1201.0
-	assert.NotEqual(t, m.vals[0], v[0], "changing mat should not effect data")
-
-	// assert.Panics(t, func() { Matf32FromData(v, 12) }, "wrong expected size")
-	// assert.Panics(t, func() { Matf32FromData(v, 11, 2) }, "wrong expected size")
-	// assert.Panics(t, func() { Matf32FromData(v, 1, 2, 3) }, "too many args")
-
 	s := make([][]float32, rows)
 	for i := range s {
 		s[i] = make([]float32, cols)
@@ -98,7 +65,6 @@ func TestMatf32FromData(t *testing.T) {
 	}
 	m = Matf32FromData(s)
 	assert.Equal(t, rows*cols, len(m.vals), "should be equal")
-	assert.Equal(t, 2*rows*cols, cap(m.vals), "should be equal")
 	idx := 0
 	for i := range s {
 		for j := range s[i] {
@@ -110,46 +76,6 @@ func TestMatf32FromData(t *testing.T) {
 	assert.NotEqual(t, s[0][0], m.vals[0], "changing data should not effect mat")
 	m.vals[0] = 1201.0
 	assert.NotEqual(t, m.vals[0], s[0][0], "changing mat should not effect data")
-
-	s[0][0] = 0.0
-	m = Matf32FromData(s, 10)
-	assert.Equal(t, 10, m.r, "should be equal")
-	assert.Equal(t, 10, m.c, "should be equal")
-	assert.Equal(t, 100, len(m.vals), "should be equal")
-	assert.Equal(t, 200, cap(m.vals), "should be equal")
-	idx = 0
-	for i := range s {
-		for j := range s[i] {
-			assert.Equal(t, s[i][j], m.vals[idx], "should be equal")
-			idx++
-		}
-	}
-	s[0][0] = 1021.0
-	assert.NotEqual(t, s[0][0], m.vals[0], "changing data should not effect mat")
-	m.vals[0] = 1201.0
-	assert.NotEqual(t, m.vals[0], s[0][0], "changing mat should not effect data")
-
-	s[0][0] = 0.0
-	m = Matf32FromData(s, rows, cols)
-	assert.Equal(t, rows, m.r, "should be equal")
-	assert.Equal(t, cols, m.c, "should be equal")
-	assert.Equal(t, rows*cols, len(m.vals), "should be equal")
-	assert.Equal(t, 2*rows*cols, cap(m.vals), "should be equal")
-	idx = 0
-	for i := range s {
-		for j := range s[i] {
-			assert.Equal(t, s[i][j], m.vals[idx], "should be equal")
-			idx++
-		}
-	}
-	s[0][0] = 1021.0
-	assert.NotEqual(t, s[0][0], m.vals[0], "changing data should not effect mat")
-	m.vals[0] = 1201.0
-	assert.NotEqual(t, m.vals[0], s[0][0], "changing mat should not effect data")
-
-	// assert.Panics(t, func() { Matf32FromData(s, 15) }, "wrong expected size")
-	// assert.Panics(t, func() { Matf32FromData(s, 1, 2) }, "wrong expected size")
-	// assert.Panics(t, func() { Matf32FromData(s, 12, 12, 4) }, "too many args")
 }
 
 func TestRandf32(t *testing.T) {
@@ -294,7 +220,7 @@ func TestMapf32(t *testing.T) {
 }
 
 func BenchmarkMapf32(b *testing.B) {
-	m := Newf32(1721, 311)
+	m := Newf32(17, 31)
 	for i := range m.vals {
 		m.vals[i] = float32(i)
 	}
@@ -413,13 +339,13 @@ func TestColf32(t *testing.T) {
 }
 
 func BenchmarkColf32(b *testing.B) {
-	m := Newf32(1721, 311)
+	m := Newf32(17, 31)
 	for i := range m.vals {
 		m.vals[i] = float32(i)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = m.Col(211)
+		_ = m.Col(21)
 	}
 }
 
@@ -442,13 +368,13 @@ func TestRowf32(t *testing.T) {
 }
 
 func BenchmarkRowf32(b *testing.B) {
-	m := Newf32(1721, 311)
+	m := Newf32(17, 31)
 	for i := range m.vals {
 		m.vals[i] = float32(i)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = m.Row(211)
+		_ = m.Row(11)
 	}
 }
 
@@ -523,7 +449,7 @@ func TestTf32(t *testing.T) {
 }
 
 func BenchmarkTf32(b *testing.B) {
-	m := Newf32(1000, 251)
+	m := Newf32(11, 21)
 	for i := range m.vals {
 		m.vals[i] = float32(i)
 	}
@@ -534,9 +460,9 @@ func BenchmarkTf32(b *testing.B) {
 }
 
 func BenchmarkTf32Vanilla(b *testing.B) {
-	m := make([][]float32, 1000)
+	m := make([][]float32, 11)
 	for i := range m {
-		m[i] = make([]float32, 251)
+		m[i] = make([]float32, 21)
 	}
 	b.ResetTimer()
 	for k := 0; k < b.N; k++ {
@@ -600,11 +526,11 @@ func TestMulf32(t *testing.T) {
 }
 
 func BenchmarkMulf32(b *testing.B) {
-	n := Newf32(1000, 1000)
+	n := Newf32(10)
 	for i := range n.vals {
 		n.vals[i] = float32(i)
 	}
-	m := Newf32(1000, 1000)
+	m := Newf32(10)
 	for i := range m.vals {
 		m.vals[i] = float32(i)
 	}
@@ -615,14 +541,14 @@ func BenchmarkMulf32(b *testing.B) {
 }
 
 func BenchmarkMulVanillaf32(b *testing.B) {
-	n := make([][]float32, 1000)
-	m := make([][]float32, 1000)
+	n := make([][]float32, 10)
+	m := make([][]float32, 10)
 	for i := range n {
-		n[i] = make([]float32, 1000)
-		m[i] = make([]float32, 1000)
+		n[i] = make([]float32, 10)
+		m[i] = make([]float32, 10)
 		for j := range n[i] {
-			n[i][j] = float32(i*1000 + j)
-			m[i][j] = float32(i*1000 + j)
+			n[i][j] = float32(i*10 + j)
+			m[i][j] = float32(i*10 + j)
 		}
 	}
 	b.ResetTimer()
@@ -650,11 +576,11 @@ func TestAddf32(t *testing.T) {
 }
 
 func BenchmarkAddf32(b *testing.B) {
-	n := Newf32(1000, 1000)
+	n := Newf32(10)
 	for i := range n.vals {
 		n.vals[i] = float32(i)
 	}
-	m := Newf32(1000, 1000)
+	m := Newf32(10)
 	for i := range m.vals {
 		m.vals[i] = float32(i)
 	}
@@ -678,11 +604,11 @@ func TestSubf32(t *testing.T) {
 }
 
 func BenchmarkSubf32(b *testing.B) {
-	n := Newf32(1000, 1000)
+	n := Newf32(10)
 	for i := range n.vals {
 		n.vals[i] = float32(i)
 	}
-	m := Newf32(1000, 1000)
+	m := Newf32(10)
 	for i := range m.vals {
 		m.vals[i] = float32(i)
 	}
@@ -707,11 +633,11 @@ func TestDivf32(t *testing.T) {
 }
 
 func BenchmarkDivf32(b *testing.B) {
-	n := Newf32(1000, 1000)
+	n := Newf32(10)
 	for i := range n.vals {
 		n.vals[i] = float32(i)
 	}
-	m := Newf32(1000, 1000)
+	m := Newf32(10)
 	for i := range m.vals {
 		m.vals[i] = float32(i)
 	}
@@ -817,8 +743,8 @@ func TestDotf32(t *testing.T) {
 }
 
 func BenchmarkDotf32(b *testing.B) {
-	m := Newf32(1000)
-	n := Newf32(1000)
+	m := Newf32(10)
+	n := Newf32(10)
 	for i := range m.vals {
 		m.vals[i] = float32(i + i)
 	}
@@ -832,17 +758,17 @@ func BenchmarkDotf32(b *testing.B) {
 }
 
 func BenchmarkDotf32Vanilla(b *testing.B) {
-	m := make([][]float32, 1000)
-	n := make([][]float32, 1000)
+	m := make([][]float32, 10)
+	n := make([][]float32, 10)
 	for i := range m {
-		m[i] = make([]float32, 1000)
-		n[i] = make([]float32, 1000)
+		m[i] = make([]float32, 10)
+		n[i] = make([]float32, 10)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		o := make([][]float32, 1000)
+		o := make([][]float32, 10)
 		for j := range o {
-			o[j] = make([]float32, 1000)
+			o[j] = make([]float32, 10)
 		}
 		for j := range m {
 			for k := range n[j] {

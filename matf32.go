@@ -82,9 +82,7 @@ func Newf32(dims ...int) *Matf32 {
 			make([]float32, dims[0]*dims[1]),
 		}
 	default:
-		s := "\nIn matrix.%s, expected 0 to 2 arguments, but received %d arguments."
-		s = fmt.Sprintf(s, "Newf32()", len(dims))
-		printErr(s)
+		printErr(fmt.Sprintf(wrongArity, "Newf32()", "0 to 2", len(dims)))
 	}
 	return m
 }
@@ -112,164 +110,46 @@ below.
 	x := matrix.Matf32FromData(v)
 
 In this case, x.Dims() is (1, len(v)), and the values in x are the same
-as the values in v. x is essentially a row vector.
-
-Alternatively, this function can be invoked as:
-
-	x := matrix.Matf32FromData(v, a)
-
-In this case, x.Dims() is (a, 1), and the values in x are the same
-as the values in v. x is essentially a column vector. Note that a
-must be equal to len(v).
-
-Finally for the case where the data is a []float32, the function can be
-invoked as:
-
-	x := matrix.Matf32FromData(v, a, b)
-
-In this case, x.Dims() is (a, b), and the values in x are the same as
-the values in v. Note that a*b must be equal to len(v). Also note that
-this is equivalent to:
-
-    x := matrix.Matf32FromData(v).reshape(a,b)
+as the values in v. x is essentially a row vector. To convert to a column
+vector or a matrix of any other shape, use the Reshape() method.
 
 This function can also be invoked with data that is stored in a 2D
-slice ([][]float32). Just as the []float32 case, there are three
-possibilities:
+slice ([][]float32).
 
 	x := matrix.Matf32FromData(s)
 
 In this case, x.Dims() is (len(s), len(s[0])), and the values in x
 are the same as the values in s. It is assumed that s is not jagged.
-
-Another form to call this function with a 2D slice of data is:
-
-	x := matrix.Matf32FromData(s, a)
-
-In this case, x.Dims() is (a, a), and the values in x are the same
-as the values in s. Note that the total number of elements in s
-must be exactly a*a.
-
-Finally, this function can be called as:
-
-	x := matrix.Matf32FromData(s, a, b)
-
-In this case, x.Dims() is (a, b), and the values in x are the same
-as the values in s. Note that the total number of elements in s
-must be exactly a*b. Also note that this is equivalent to:
-
-	x := matrix.Matf32FromData(s).Reshape(a, b)
-
-Choose the format that suits your needs, as there is no performance
-difference between the two forms.
 */
-func Matf32FromData(oneOrTwoDSlice interface{}, dims ...int) *Matf32 {
+func Matf32FromData(oneOrTwoDSlice interface{}) *Matf32 {
 	switch v := oneOrTwoDSlice.(type) {
 	case []float32:
-		return matf32FromOneDSliceHelper(v, dims)
+		return matf32FromOneDSliceHelper(v)
 	case [][]float32:
-		return matf32FromTwoDSliceHelper(v, dims)
+		return matf32FromTwoDSliceHelper(v)
 	default:
-		s := "\nIn matrix.%s, expected input data of type []float32 or\n"
-		s += "[][]float32, However, data of type \"%v\" was received."
-		s = fmt.Sprintf(s, "Matf32FromData()", reflect.TypeOf(v))
-		printErr(s)
+		printErr(fmt.Sprintf(wrongArgType, "Matf32FromData()", "[]float32 or [][]float32", v))
 	}
 	return nil
 }
 
-func matf32FromOneDSliceHelper(v []float32, dims []int) *Matf32 {
+func matf32FromOneDSliceHelper(v []float32) *Matf32 {
 	m := Newf32()
-	switch len(dims) {
-	case 0:
-		m.vals = make([]float32, len(v), len(v)*2)
-		copy(m.vals, v)
-		m.r, m.c = 1, len(v)
-	case 1:
-		if dims[0] != len(v) {
-			s := "\nIn matrix.%s, a 1D slice of data and a single int were passed.\n"
-			s += "However the int (%d) is not equal to the length of the data (%d)."
-			s = fmt.Sprintf(s, "Matf32FromData()", dims[0], len(v))
-			printHelperErr(s)
-		}
-		m.vals = make([]float32, dims[0], dims[0]*2)
-		copy(m.vals, v)
-		m.r, m.c = dims[0], 1
-	case 2:
-		if dims[0]*dims[1] != len(v) {
-			s := "\nIn matrix.%s, a 1D slice of data and two ints were passed.\n"
-			s += "However, the product of the two ints (%d, %d) does not equal\n"
-			s += "the number of elements in the data slice, %d. They must be equal."
-			s = fmt.Sprintf(s, "Matf32FromData()", dims[0]*dims[1], len(v))
-			printHelperErr(s)
-		}
-		m.vals = make([]float32, dims[0]*dims[1], dims[0]*dims[1]*2)
-		copy(m.vals, v)
-		m.r, m.c = dims[0], dims[1]
-	default:
-		s := "\nIn matrix.%s, a 1D slice of data and %d ints were passed.\n"
-		s += "This function expects 0 to 2 integers. Please review the docs for\n"
-		s += "this function and adjust the number of integers based on the\n"
-		s += "desired output."
-		s = fmt.Sprintf(s, "Matf32FromData()", len(dims))
-		printHelperErr(s)
-	}
+	m.vals = make([]float32, len(v))
+	copy(m.vals, v)
+	m.r, m.c = 1, len(v)
 	return m
 }
 
-func matf32FromTwoDSliceHelper(v [][]float32, dims []int) *Matf32 {
+func matf32FromTwoDSliceHelper(v [][]float32) *Matf32 {
 	m := Newf32()
-	switch len(dims) {
-	case 0:
-		m.vals = make([]float32, len(v)*len(v[0]), len(v)*len(v[0])*2)
-		for i := range v {
-			for j := range v[i] {
-				m.vals[i*len(v[0])+j] = v[i][j]
-			}
+	m.vals = make([]float32, len(v)*len(v[0]))
+	for i := range v {
+		for j := range v[i] {
+			m.vals[i*len(v[0])+j] = v[i][j]
 		}
-		m.r, m.c = len(v), len(v[0])
-	case 1:
-		if dims[0]*dims[0] != len(v)*len(v[0]) {
-			s := "\nIn matrix.%s, a 2D slice of data and 1 int were passed.\n"
-			s += "This would generate a %d by %d Matf32. However, %d*%d does not\n"
-			s += "equal the number of elements in the passed 2D slice, %d.\n"
-			s += "Note that this function expects a non-jagged 2D slice, and\n"
-			s += "is assumed that every row in the passed 2D slice contains\n"
-			s += "%d elements."
-			s = fmt.Sprintf(s, "Matf32FromData()", dims[0], dims[0], dims[0], dims[0],
-				len(v)*len(v[0]), len(v[0]))
-			printHelperErr(s)
-		}
-		m.vals = make([]float32, dims[0]*dims[0], dims[0]*dims[0]*2)
-		for i := range v {
-			for j := range v[i] {
-				m.vals[i*len(v[0])+j] = v[i][j]
-			}
-		}
-		m.r, m.c = dims[0], dims[0]
-	case 2:
-		if dims[0] != len(v) || dims[1] != len(v[0]) {
-			s := "\nIn matrix.%s, a 2D slice of data and 2 ints were passed.\n"
-			s += "However, the requested number of rows and columns (%d and %d)\n"
-			s += "of the resultant Matf32 does not match the length and width of\n"
-			s += "the data slice (%d and %d)."
-			s = fmt.Sprintf(s, "Matf32FromData()", dims[0], dims[1], len(v), len(v[0]))
-			printHelperErr(s)
-		}
-		m.vals = make([]float32, dims[0]*dims[1], dims[0]*dims[1]*2)
-		for i := range v {
-			for j := range v[i] {
-				m.vals[i*len(v[0])+j] = v[i][j]
-			}
-		}
-		m.r, m.c = len(v), len(v[0])
-	default:
-		s := "\nIn matrix.%s, a 2D slice of data and %d ints were passed.\n"
-		s += "However, this function expects 0 to 2 ints. Review the docs for\n"
-		s += "this function and adjust the number of integers passed accordingly."
-		s = fmt.Sprintf(s, "Matf32FromData()", len(dims))
-		printHelperErr(s)
-	} // switch len(dims) for case [][]float32
+	}
+	m.r, m.c = len(v), len(v[0])
 	return m
 }
 
@@ -319,9 +199,7 @@ func RandMatf32(r, c int, args ...float32) *Matf32 {
 			m.vals[i] = rand.Float32()*(to-from) + from
 		}
 	default:
-		s := "\nIn matrix.%s expected 0 to 2 arguments, but received %d."
-		s = fmt.Sprintf(s, "RandMatf32()", len(args))
-		printErr(s)
+		printErr(fmt.Sprintf(wrongArity, "RandMatf32()", "0 to 2", len(args)))
 	}
 	return m
 }
@@ -333,15 +211,9 @@ the values of the mat does not change with this function.
 */
 func (m *Matf32) Reshape(rows, cols int) *Matf32 {
 	if rows*cols != m.r*m.c {
-		s := "\nIn %s, The total number of entries of the old and new shape\n"
-		s += "must match. The Old Matf32 had a shape of row = %d, col = %d,\n"
-		s += "which is not equal to the requested shape of row, col = %d, %d\n"
-		s = fmt.Sprintf(s, "Reshape()", m.r, m.c, rows, cols)
-		printErr(s)
-	} else {
-		m.r = rows
-		m.c = cols
+		printErr(fmt.Sprintf(sizeMismatch, "Reshape()", m.r, m.c, rows, cols))
 	}
+	m.r, m.c = rows, cols
 	return m
 }
 
@@ -411,13 +283,13 @@ func (m *Matf32) Get(r, c int) float32 {
 Set sets the value of a mat at a given row and column to a given
 value.
 */
-func (m *Matf32) Set(r, c int, val float32) *Matf32 {
-	m.vals[r*m.c+c] = val
+func (m *Matf32) Set(r, c int, val float64) *Matf32 {
+	m.vals[r*m.c+c] = float32(val)
 	return m
 }
 
 /*
-SetAll sets all values of a mat to the passed float32 value.
+SetAll sets all values of a mat to the passed float64 value.
 */
 func (m *Matf32) SetAll(val float64) *Matf32 {
 	val32 := float32(val)
@@ -464,9 +336,7 @@ func (m *Matf32) SetCol(col int, floatOrSlice interface{}) *Matf32 {
 	switch val := floatOrSlice.(type) {
 	case float64:
 		if (col >= m.c) || (col < -m.c) {
-			s := "\nIn %s the requested column %d is outside of bounds [%d, %d)\n"
-			s = fmt.Sprintf(s, "SetCol()", col, m.c, m.c)
-			printErr(s)
+			printErr(fmt.Sprintf(colOutOfBound, "SetCol()", col, m.c, m.c))
 		}
 		val32 := float32(val)
 		if col >= 0 {
@@ -480,10 +350,7 @@ func (m *Matf32) SetCol(col int, floatOrSlice interface{}) *Matf32 {
 		}
 	case []float32:
 		if len(val) != m.r {
-			s := "\nIn %s the length of the passed slice is %d, which does\n"
-			s += "not match the number of rows in the receiver, %d."
-			s = fmt.Sprintf(s, "SetCol()", len(val), m.r)
-			printErr(s)
+			printErr(fmt.Sprintf(sizeMismatch, "SetCol()", len(val), 1, m.r, m.c))
 		}
 		if col >= 0 {
 			for r := 0; r < m.r; r++ {
@@ -495,10 +362,7 @@ func (m *Matf32) SetCol(col int, floatOrSlice interface{}) *Matf32 {
 			}
 		}
 	default:
-		s := "\nIn %s, the passed value must be a float32 or []float32.\n"
-		s += "However, value of type  %v was received.\n"
-		s = fmt.Sprintf(s, "SetCol()", reflect.TypeOf(val))
-		printErr(s)
+		printErr(fmt.Sprintf(wrongArgType, "SetCol()", "float32 or []float32", val))
 	}
 	return m
 }
@@ -523,9 +387,7 @@ func (m *Matf32) SetRow(row int, floatOrSlice interface{}) *Matf32 {
 	switch val := floatOrSlice.(type) {
 	case float64:
 		if (row >= m.r) || (row < -m.r) {
-			s := "\nIn %s, row %d is outside of the bounds [-%d, %d)\n"
-			s = fmt.Sprintf(s, "SetRow()", row, m.r, m.r)
-			printErr(s)
+			printErr(fmt.Sprintf(rowOutOfBound, "SetRow()", row, m.r, m.r))
 		}
 		val32 := float32(val)
 		if row >= 0 {
@@ -539,10 +401,7 @@ func (m *Matf32) SetRow(row int, floatOrSlice interface{}) *Matf32 {
 		}
 	case []float32:
 		if len(val) != m.c {
-			s := "\nIn %s the length of the passed slice is %d, which does\n"
-			s += "not match the number of columns in the receiver, %d."
-			s = fmt.Sprintf(s, "SetRow()", len(val), m.c)
-			printErr(s)
+			printErr(fmt.Sprintf(sizeMismatch, "SetRow()", 1, len(val), m.r, m.c))
 		}
 		if row >= 0 {
 			for r := 0; r < m.c; r++ {
@@ -554,10 +413,7 @@ func (m *Matf32) SetRow(row int, floatOrSlice interface{}) *Matf32 {
 			}
 		}
 	default:
-		s := "\nIn %s, the passed value must be a float32 or []float32.\n"
-		s += "However, value of type  %v was received.\n"
-		s = fmt.Sprintf(s, "SetRow()", reflect.TypeOf(val))
-		printErr(s)
+		printErr(fmt.Sprintf(wrongArgType, "SetRow()", "float32 or []float32", val))
 	}
 	return m
 }
@@ -575,9 +431,7 @@ returns the last column of m.
 */
 func (m *Matf32) Col(x int) *Matf32 {
 	if (x >= m.c) || (x < -m.c) {
-		s := "\nIn %s the requested column %d is outside of bounds [-%d, %d)\n"
-		s = fmt.Sprintf(s, "Col()", x, m.c, m.c)
-		printErr(s)
+		printErr(fmt.Sprintf(colOutOfBound, "Col()", x, m.c, m.c))
 	}
 	v := Newf32(m.r, 1)
 	if x >= 0 {
@@ -605,9 +459,7 @@ returns the last row of m.
 */
 func (m *Matf32) Row(x int) *Matf32 {
 	if (x >= m.r) || (x < -m.r) {
-		s := "\nIn %s, row %d is outside of the bounds [-%d, %d)\n"
-		s = fmt.Sprintf(s, "Row()", x, m.r, m.r)
-		printErr(s)
+		printErr(fmt.Sprintf(rowOutOfBound, "Row()", x, m.r, m.r))
 	}
 	v := Newf32(1, m.c)
 	if x >= 0 {
@@ -1410,7 +1262,7 @@ func (m *Matf32) AppendRow(v []float32) *Matf32 {
 		printErr(s)
 	}
 	if cap(m.vals) < (len(m.vals) + len(v)) {
-		newVals := make([]float32, len(m.vals)+len(v), len(m.vals)+len(v)*2)
+		newVals := make([]float32, len(m.vals)+len(v))
 		lastElem := len(m.vals)
 		for i := range m.vals {
 			newVals[i] = m.vals[i]

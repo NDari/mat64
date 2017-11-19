@@ -32,16 +32,12 @@ func TestNewf64(t *testing.T) {
 	assert.NotNil(t, m.vals, "should not be nil")
 	assert.Equal(t, rows*cols, len(m.vals), "should be equal")
 	assert.Equal(t, 2*rows*cols, cap(m.vals), "should have twice the capacity")
-
-	// assert.Panics(t, func() { Newf64(1, 2, 3, 4) }, "should panic with 3+ args")
 }
 
 func TestMatf64FromData(t *testing.T) {
 	t.Helper()
 	rows := 50
 	cols := 2
-
-	// assert.Panics(t, func() { Matf64FromData(1.0) }, "should panic with wrong arg")
 
 	v := make([]float64, rows*cols)
 	for i := range v {
@@ -84,10 +80,6 @@ func TestMatf64FromData(t *testing.T) {
 	assert.NotEqual(t, v[0], m.vals[0], "changing data should not effect mat")
 	m.vals[0] = 1201.0
 	assert.NotEqual(t, m.vals[0], v[0], "changing mat should not effect data")
-
-	// assert.Panics(t, func() { Matf64FromData(v, 12) }, "wrong expected size")
-	// assert.Panics(t, func() { Matf64FromData(v, 11, 2) }, "wrong expected size")
-	// assert.Panics(t, func() { Matf64FromData(v, 1, 2, 3) }, "too many args")
 
 	s := make([][]float64, rows)
 	for i := range s {
@@ -148,10 +140,6 @@ func TestMatf64FromData(t *testing.T) {
 	assert.NotEqual(t, s[0][0], m.vals[0], "changing data should not effect mat")
 	m.vals[0] = 1201.0
 	assert.NotEqual(t, m.vals[0], s[0][0], "changing mat should not effect data")
-
-	// assert.Panics(t, func() { Matf64FromData(s, 15) }, "wrong expected size")
-	// assert.Panics(t, func() { Matf64FromData(s, 1, 2) }, "wrong expected size")
-	// assert.Panics(t, func() { Matf64FromData(s, 12, 12, 4) }, "too many args")
 }
 
 func TestMatf64FromCSV(t *testing.T) {
@@ -160,8 +148,6 @@ func TestMatf64FromCSV(t *testing.T) {
 	cols := 4
 
 	filename := "non-exitant-file"
-
-	// assert.Panics(t, func() { Matf64FromCSV(filename) }, "should panic")
 
 	filename = "test.csv"
 	str := "1.0,1.0,2.0,3.0\n5.0,8.0,13.0,21.0\n34.0,55.0,89.0,144.0"
@@ -220,9 +206,6 @@ func TestRandf64(t *testing.T) {
 			t.Errorf("at index %d, expected [-12.0, 2.0), got %f", i, m.vals[i])
 		}
 	}
-
-	// assert.Panics(t, func() { RandMatf64(rows, cols, 12.0, 2.0, 13.0) }, "should panic")
-	// assert.Panics(t, func() { RandMatf64(rows, cols, 12.0, 2.0) }, "should panic")
 }
 
 func TestReshapef64(t *testing.T) {
@@ -238,8 +221,6 @@ func TestReshapef64(t *testing.T) {
 	for i := 0; i < len(s); i++ {
 		assert.Equal(t, s[i], m.vals[i], "should be equal")
 	}
-
-	// assert.Panics(t, func() { m.Reshape(rows, rows) }, "should panic")
 }
 
 func TestShapef64(t *testing.T) {
@@ -333,7 +314,7 @@ func TestMapf64(t *testing.T) {
 }
 
 func BenchmarkMapf64(b *testing.B) {
-	m := Newf64(1721, 311)
+	m := Newf64(17, 31)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -388,13 +369,6 @@ func TestSetColf64(t *testing.T) {
 	for i := range n.vals {
 		assert.Equal(t, 0.0, n.vals[i], "should be equal")
 	}
-
-	// assert.Panics(t, func() { m.SetCol(-5, 2.0) }, "should panic")
-	// assert.Panics(t, func() { m.SetCol(5, 2.0) }, "should panic")
-	// assert.Panics(t, func() { m.SetCol(-1, []float64{0.0}) }, "should panic")
-	// assert.Panics(t, func() { m.SetCol(1, []float64{0.0}) }, "should panic")
-	// assert.Panics(t, func() { m.SetCol(-1, 1) }, "should panic")
-	// assert.Panics(t, func() { m.SetCol(1, 1) }, "should panic")
 }
 
 func TestSetRowf64(t *testing.T) {
@@ -420,13 +394,6 @@ func TestSetRowf64(t *testing.T) {
 	for i := range n.vals {
 		assert.Equal(t, 0.0, n.vals[i], "should be equal")
 	}
-
-	// assert.Panics(t, func() { m.SetRow(-5, 2.0) }, "should panic")
-	// assert.Panics(t, func() { m.SetRow(5, 2.0) }, "should panic")
-	// assert.Panics(t, func() { m.SetRow(-1, []float64{0.0}) }, "should panic")
-	// assert.Panics(t, func() { m.SetRow(1, []float64{0.0}) }, "should panic")
-	// assert.Panics(t, func() { m.SetRow(-1, 1) }, "should panic")
-	// assert.Panics(t, func() { m.SetRow(1, 1) }, "should panic")
 }
 
 func TestColf64(t *testing.T) {
@@ -452,13 +419,13 @@ func TestColf64(t *testing.T) {
 }
 
 func BenchmarkColf64(b *testing.B) {
-	m := Newf64(1721, 311)
+	m := Newf64(17, 31)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = m.Col(211)
+		_ = m.Col(21)
 	}
 }
 
@@ -481,13 +448,13 @@ func TestRowf64(t *testing.T) {
 }
 
 func BenchmarkRowf64(b *testing.B) {
-	m := Newf64(1721, 311)
+	m := Newf64(17, 31)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = m.Row(211)
+		_ = m.Row(11)
 	}
 }
 
@@ -561,7 +528,7 @@ func TestTf64(t *testing.T) {
 }
 
 func BenchmarkTf64(b *testing.B) {
-	m := Newf64(1000, 251)
+	m := Newf64(11, 21)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -572,9 +539,9 @@ func BenchmarkTf64(b *testing.B) {
 }
 
 func BenchmarkTf64Vanilla(b *testing.B) {
-	m := make([][]float64, 1000)
+	m := make([][]float64, 11)
 	for i := range m {
-		m[i] = make([]float64, 251)
+		m[i] = make([]float64, 21)
 	}
 	b.ResetTimer()
 	for k := 0; k < b.N; k++ {
@@ -638,11 +605,11 @@ func TestMulf64(t *testing.T) {
 }
 
 func BenchmarkMulf64(b *testing.B) {
-	n := Newf64(1000, 1000)
+	n := Newf64(10)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}
-	m := Newf64(1000, 1000)
+	m := Newf64(10)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -653,14 +620,14 @@ func BenchmarkMulf64(b *testing.B) {
 }
 
 func BenchmarkMulVanillaf64(b *testing.B) {
-	n := make([][]float64, 1000)
-	m := make([][]float64, 1000)
+	n := make([][]float64, 10)
+	m := make([][]float64, 10)
 	for i := range n {
-		n[i] = make([]float64, 1000)
-		m[i] = make([]float64, 1000)
+		n[i] = make([]float64, 10)
+		m[i] = make([]float64, 10)
 		for j := range n[i] {
-			n[i][j] = float64(i*1000 + j)
-			m[i][j] = float64(i*1000 + j)
+			n[i][j] = float64(i*10 + j)
+			m[i][j] = float64(i*10 + j)
 		}
 	}
 	b.ResetTimer()
@@ -688,11 +655,11 @@ func TestAddf64(t *testing.T) {
 }
 
 func BenchmarkAddf64(b *testing.B) {
-	n := Newf64(1000, 1000)
+	n := Newf64(10)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}
-	m := Newf64(1000, 1000)
+	m := Newf64(10)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -716,11 +683,11 @@ func TestSubf64(t *testing.T) {
 }
 
 func BenchmarkSubf64(b *testing.B) {
-	n := Newf64(1000, 1000)
+	n := Newf64(10)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}
-	m := Newf64(1000, 1000)
+	m := Newf64(10)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -745,11 +712,11 @@ func TestDivf64(t *testing.T) {
 }
 
 func BenchmarkDivf64(b *testing.B) {
-	n := Newf64(1000, 1000)
+	n := Newf64(10)
 	for i := range n.vals {
 		n.vals[i] = float64(i)
 	}
-	m := Newf64(1000, 1000)
+	m := Newf64(10)
 	for i := range m.vals {
 		m.vals[i] = float64(i)
 	}
@@ -856,8 +823,8 @@ func TestDotf64(t *testing.T) {
 }
 
 func BenchmarkDotf64(b *testing.B) {
-	m := Newf64(1000)
-	n := Newf64(1000)
+	m := Newf64(10)
+	n := Newf64(10)
 	for i := range m.vals {
 		m.vals[i] = float64(i + i)
 	}
@@ -871,17 +838,17 @@ func BenchmarkDotf64(b *testing.B) {
 }
 
 func BenchmarkDotf64Vanilla(b *testing.B) {
-	m := make([][]float64, 1000)
-	n := make([][]float64, 1000)
+	m := make([][]float64, 10)
+	n := make([][]float64, 10)
 	for i := range m {
-		m[i] = make([]float64, 1000)
-		n[i] = make([]float64, 1000)
+		m[i] = make([]float64, 10)
+		n[i] = make([]float64, 10)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		o := make([][]float64, 1000)
+		o := make([][]float64, 10)
 		for j := range o {
-			o[j] = make([]float64, 1000)
+			o[j] = make([]float64, 10)
 		}
 		for j := range m {
 			for k := range n[j] {

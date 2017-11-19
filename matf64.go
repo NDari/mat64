@@ -1435,9 +1435,10 @@ func (m *Matf64) Dot(n *Matf64) *Matf64 {
 	defer n.T()
 	for i := 0; i < m.r; i++ {
 		imc := i * m.c
+		mrow := m.vals[imc : imc+m.c]
 		for j := 0; j < n.r; j++ {
 			jnc := j * n.c
-			o.vals[i*n.r+j] = dotf64Helper(m.vals[imc:imc+m.c], n.vals[jnc:jnc+n.c])
+			o.vals[i*n.r+j] = dotf64Helper(mrow, n.vals[jnc:jnc+n.c])
 		}
 	}
 	return o
