@@ -89,21 +89,6 @@ func TestRandf32(t *testing.T) {
 			t.Errorf("at index %d, expected [0, 1.0), got %f", i, m.vals[i])
 		}
 	}
-	m = RandMatf32(rows, cols, 100.0)
-	for i := 0; i < rows*cols; i++ {
-		if m.vals[i] < 0.0 || m.vals[i] >= 100.0 {
-			t.Errorf("at index %d, expected [0, 100.0), got %f", i, m.vals[i])
-		}
-	}
-	m = RandMatf32(rows, cols, -12.0, 2.0)
-	for i := 0; i < rows*cols; i++ {
-		if m.vals[i] < -12.0 || m.vals[i] >= 2.0 {
-			t.Errorf("at index %d, expected [-12.0, 2.0), got %f", i, m.vals[i])
-		}
-	}
-
-	// assert.Panics(t, func() { RandMatf32(rows, cols, 12.0, 2.0, 13.0) }, "should panic")
-	// assert.Panics(t, func() { RandMatf32(rows, cols, 12.0, 2.0) }, "should panic")
 }
 
 func TestReshapef32(t *testing.T) {
@@ -737,7 +722,7 @@ func TestDotf32(t *testing.T) {
 		assert.Equal(t, float32(18.0), v[i])
 	}
 	x := Newf32(13)
-	y := If32(13)
+	y := Eyef32(13)
 	z := x.Dot(y)
 	assert.True(t, x.Equals(z), "A times I should equal A")
 }

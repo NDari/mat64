@@ -88,9 +88,9 @@ func Newf32(dims ...int) *Matf32 {
 }
 
 /*
-If32 returns the identity matrix
+Eyef32 returns the identity matrix
 */
-func If32(x int) *Matf32 {
+func Eyef32(x int) *Matf32 {
 	m := Newf32(x)
 	for i := 1; i < x; i++ {
 		m.vals[i*i-1] = float32(1.0)
@@ -154,52 +154,17 @@ func matf32FromTwoDSliceHelper(v [][]float32) *Matf32 {
 }
 
 /*
-RandMatf32 returns a Matf32 whose elements have random values. There are 3 ways to call
-RandMatf32:
+RandMatf32 returns a Matf32 whose elements have random values. For example:
 
 	m := matrix.RandMatf32(2, 3)
 
-With this call, m is a 2X3 Matf32 whose elements have values randomly selected from
-the range (0, 1], (includes 0, but excludes 1).
-
-	m := matrix.RandMatf32(2, 3, x)
-
-With this call, m is a 2X3 Matf32 whose elements have values randomly selected from
-the range (0, x], (includes 0, but excludes x).
-
-	m := matrix.RandMatf32(2, 3, x, y)
-
-With this call, m is a 2X3 Matf32 whose elements have values randomly selected from
-the range (x, y], (includes x, but excludes y). In this case, x must be strictly
-less than y.
+m is a 2X3 Matf32 whose elements have values randomly selected from the range
+(0, 1], (includes 0, but excludes 1).
 */
-func RandMatf32(r, c int, args ...float32) *Matf32 {
+func RandMatf32(r, c int) *Matf32 {
 	m := Newf32(r, c)
-	switch len(args) {
-	case 0:
-		for i := 0; i < m.r*m.c; i++ {
-			m.vals[i] = rand.Float32()
-		}
-	case 1:
-		to := args[0]
-		for i := 0; i < m.r*m.c; i++ {
-			m.vals[i] = rand.Float32() * to
-		}
-	case 2:
-		from := args[0]
-		to := args[1]
-		if !(from < to) {
-			s := "\nIn matrix.%s the first argument, %f, is not less than the\n"
-			s += "second argument, %f. The first argument must be strictly\n"
-			s += "less than the second.\n"
-			s = fmt.Sprintf(s, "RandMatf32()", from, to)
-			printErr(s)
-		}
-		for i := 0; i < m.r*m.c; i++ {
-			m.vals[i] = rand.Float32()*(to-from) + from
-		}
-	default:
-		printErr(fmt.Sprintf(wrongArity, "RandMatf32()", "0 to 2", len(args)))
+	for i := range m.vals {
+		m.vals[i] = rand.Float32()
 	}
 	return m
 }
@@ -491,6 +456,7 @@ Note that negative index values are not supported at this time. Also note that
 in the case where multiple values are the maximum, the index of the first
 encountered value is returned.
 */
+// TODO: support negative index, and fix errors.
 func (m *Matf32) Min(args ...int) (index int, minVal float32) {
 	switch len(args) {
 	case 0:
@@ -561,6 +527,7 @@ Note that negative index values are not supported at this time. Also note that
 in the case where multiple values are the maximum, the index of the first
 encountered value is returned.
 */
+// TODO: support negative index, and fix errors.
 func (m *Matf32) Max(args ...int) (index int, maxVal float32) {
 	switch len(args) {
 	case 0:
